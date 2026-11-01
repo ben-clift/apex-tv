@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Kapang</title>
+<link rel="stylesheet" href="shared/common.css"></head><body>
+<div class="top"><h1>Kapang</h1><span class="dim">Free TV launcher</span></div>
+<div class="wrap">
+  <h2>Open Kapang live TV</h2>
+  <p class="dim">This opens the Kapang website full screen on your TV. The site and its channels are run by Kapang, not by this app, so what you can watch depends on them. Some pages ask you to turn off an ad blocker.</p>
+  <p style="margin-top:30px"><span class="btn f" id="go">Open Kapang</span> <span class="btn f" id="ch">Open channel list</span> <span class="btn f" id="auto">Auto open: <b id="av">off</b></span></p>
+  <p class="dim" style="margin-top:30px">Tip: once the site is open, use the remote like a pointer, and press Back to return here or leave the app.</p>
+</div>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// Edit kapangUrl in config.js if you want a different start page (for example a favourite channel).
+var base="https://kapang.com/",url=(A.cfg.kapangUrl||"https://kapang.com/live?channel_id=799");
+function open(u){location.href=u}
+A.$("#go").onclick=function(){open(url)};
+A.$("#ch").onclick=function(){open(base+"live")};
+var auto=A.store("kapangAuto")===true;A.$("#av").textContent=auto?"on":"off";
+A.$("#auto").onclick=function(){auto=!auto;A.store("kapangAuto",auto);A.$("#av").textContent=auto?"on":"off"};
+if(auto&&!document.referrer)setTimeout(function(){open(url)},2500);
+</script></body></html>

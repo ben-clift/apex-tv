@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Now Playing</title>
+<link rel="stylesheet" href="shared/common.css"></head><body>
+<div class="top"><h1>Now Playing</h1><span id="st" class="dim"></span></div>
+<div class="wrap" style="text-align:center;margin-top:60px"><div id="artist" style="font-size:2.2em" class="dim"></div><div id="title" style="font-size:3.6em;font-weight:700"></div>
+<div id="meta" class="c-y" style="font-size:1.6em;margin:24px 0"></div><h2 style="margin-top:60px" class="dim">Up next</h2><div id="next" style="font-size:1.3em"></div></div>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// Polls a JSON file you publish: {"artist":"","title":"","bpm":124,"key":"8A","next":[{"artist":"","title":""}]}
+// BeatDeck does not publish this yet. Until it does, you can update the file by hand or from a small script.
+var u=A.cfg.nowPlayingUrl;
+function draw(d){A.$("#artist").textContent=d.artist||"";A.$("#title").textContent=d.title||"";
+  A.$("#meta").textContent=[d.bpm?d.bpm+" BPM":"",d.key?"Key "+d.key:""].filter(Boolean).join("   ");
+  var n=A.$("#next");n.innerHTML="";(d.next||[]).slice(0,3).forEach(function(x){n.appendChild(A.el("div",{text:x.artist+" - "+x.title}))})}
+function poll(){if(!u){draw({artist:"Demo mode",title:"Set nowPlayingUrl in config.js",bpm:124,key:"8A",next:[{artist:"Artist",title:"Next track"}]});A.$("#st").textContent="Demo";return}
+  A.getJSON(u+(u.indexOf("?")>-1?"&":"?")+"t="+Date.now()).then(function(d){draw(d);A.$("#st").textContent="Live"}).catch(function(e){A.$("#st").textContent=e.message})}
+poll();setInterval(poll,5000);
+</script></body></html>

@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Stream Check</title>
+<link rel="stylesheet" href="shared/common.css"><style>video{width:1280px;height:720px;background:#000;border-radius:12px}#info{font-size:.7em;line-height:1.5}</style></head><body>
+<div class="top"><h1>Stream Check</h1><span id="name" class="dim"></span></div>
+<div class="wrap" style="display:grid;grid-template-columns:1300px 1fr;gap:30px"><video id="v" controls autoplay></video><div><h2>Streams</h2><div id="list"></div><pre id="info" class="dim"></pre></div></div>
+<script>window.HINTS='◀ ▶ previous / next stream<span class="c-g">GREEN play/pause</span>'</script>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// For testing HLS (.m3u8) or mp4 streams you own or are licensed to use, for example an Apex FAST channel feed,
+// on a real Samsung TV. Samsung's player handles HLS natively. Add links to "streams" in config.js.
+var s=A.cfg.streams||[],i=0,v=A.$("#v"),stalls=0,t0;
+function list(){var l=A.$("#list");l.innerHTML="";if(!s.length)l.appendChild(A.el("p",{class:"dim",text:"No streams. Add to streams in config.js: [{name,url}]"}));
+  s.forEach(function(x,k){var b=A.el("div",{class:"panel f",tabindex:"0",text:x.name,style:"margin:8px 0;font-size:.8em"});b.onclick=function(){play(k)};l.appendChild(b)})}
+function play(k){i=(k+s.length)%s.length;stalls=0;t0=Date.now();A.$("#name").textContent=s[i].name;v.src=s[i].url;v.play&&v.play()}
+v.addEventListener("waiting",function(){stalls++;info()});v.addEventListener("error",function(){A.toast("Playback error. Check the link and that it allows TV playback.",4000)});
+v.addEventListener("loadedmetadata",function(){info()});
+function info(){A.$("#info").textContent="Size: "+v.videoWidth+"x"+v.videoHeight+"\nStarted in about "+(t0?Math.round((Date.now()-t0)/100)/10+" s":"?")+"\nBuffer stalls: "+stalls+"\nDuration: "+(isFinite(v.duration)?Math.round(v.duration)+" s":"live")}
+A.on("right",function(){if(s.length)play(i+1)});A.on("left",function(){if(s.length)play(i-1)});
+A.on("green",function(){v.paused?v.play():v.pause()});A.on("play",function(){v.paused?v.play():v.pause()});
+list();if(s.length)play(0);
+</script></body></html>

@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Request a track</title>
+<style>body{font:18px system-ui;background:#0b0c10;color:#f3efe3;margin:0;padding:20px;max-width:520px;margin:auto}input,button{font:inherit;width:100%;padding:14px;margin:8px 0;border-radius:10px;border:1px solid #444;background:#1b1d26;color:#fff}button{background:#d9a521;color:#111;font-weight:700;border:0}li{margin:8px 0;list-style:none;display:flex;justify-content:space-between}</style></head><body>
+<h2>Request a track</h2>
+<p style="color:#9a9684">Type the artist and title. The DJ decides what gets played.</p>
+<input id="t" placeholder="Artist - Title" maxlength="80"><input id="w" placeholder="Your name (optional)" maxlength="30">
+<button id="go">Send request</button><p id="msg"></p><ul id="list"></ul>
+<script>
+// Host this file somewhere public (GitHub Pages). Paste your PUBLIC anon key and URL, never a secret key.
+var URL="PASTE_SUPABASE_URL", KEY="PASTE_SUPABASE_ANON_KEY";
+var H={apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"};
+var last=0;
+function load(){fetch(URL+"/rest/v1/requests?select=*&order=votes.desc&limit=15",{headers:H}).then(r=>r.json()).then(rows=>{
+  var ul=document.getElementById("list");ul.innerHTML="";
+  rows.forEach(r=>{var li=document.createElement("li");li.textContent=r.track+"  ";var b=document.createElement("button");b.style.width="auto";b.textContent="▲ "+(r.votes||0);
+    b.onclick=function(){fetch(URL+"/rest/v1/rpc/vote",{method:"POST",headers:H,body:JSON.stringify({req_id:r.id})}).then(load)};li.appendChild(b);ul.appendChild(li)})})}
+document.getElementById("go").onclick=function(){
+  var t=document.getElementById("t").value.trim();if(!t)return;
+  if(Date.now()-last<15000){msg.textContent="Wait a few seconds between requests.";return}  // client side only; add a server limit too
+  last=Date.now();
+  fetch(URL+"/rest/v1/requests",{method:"POST",headers:H,body:JSON.stringify({track:t.slice(0,80),who:document.getElementById("w").value.slice(0,30),votes:1})})
+   .then(r=>{msg.textContent=r.ok?"Sent!":"Could not send";document.getElementById("t").value="";load()})};
+var msg=document.getElementById("msg");load();setInterval(load,10000);
+</script></body></html>

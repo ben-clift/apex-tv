@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Ambient Clock</title>
+<link rel="stylesheet" href="shared/common.css"><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center}#t{font-size:12em;font-weight:200;letter-spacing:.04em}#d{font-size:1.6em;color:var(--dim)}#w{margin-top:50px;font-size:1.6em}</style></head><body>
+<div id="t"></div><div id="d"></div><div id="w" class="dim"></div>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// Weather from Open-Meteo (free, no key). Move the clock a little every minute to avoid burn-in on OLED TVs.
+var P=A.cfg.place,codes={0:"Clear",1:"Mostly clear",2:"Part cloud",3:"Overcast",45:"Fog",48:"Fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",71:"Light snow",73:"Snow",75:"Heavy snow",80:"Showers",81:"Showers",82:"Heavy showers",95:"Thunderstorm"};
+function tick(){var n=new Date();A.$("#t").textContent=A.pad(n.getHours())+":"+A.pad(n.getMinutes());
+  A.$("#d").textContent=n.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  document.body.style.transform="translate("+((n.getMinutes()%7)-3)*6+"px,"+((n.getMinutes()%5)-2)*6+"px)"}
+function wx(){A.getJSON("https://api.open-meteo.com/v1/forecast?latitude="+P.lat+"&longitude="+P.lon+"&current=temperature_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FLondon").then(function(d){
+  var c=d.current;A.$("#w").textContent=P.name+": "+Math.round(c.temperature_2m)+"°C, "+(codes[c.weather_code]||"")+"  (today "+Math.round(d.daily.temperature_2m_min[0])+"° to "+Math.round(d.daily.temperature_2m_max[0])+"°)"})
+  .catch(function(e){A.$("#w").textContent="Weather unavailable: "+e.message})}
+tick();wx();setInterval(tick,1000);setInterval(wx,900000);
+</script></body></html>

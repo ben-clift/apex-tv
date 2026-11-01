@@ -1,0 +1,8 @@
+{
+  "note": "Kick off times from your screenshot (1 Nov 2026). Broadcasters are left for you to fill in from the league's official listing.",
+  "fixtures": [
+    {"sport": "Football", "competition": "Serie A", "home": "SSC Napoli", "away": "Juventus", "kickoff": "2026-11-01 19:45", "where": "[ADD UK broadcaster]"},
+    {"sport": "Football", "competition": "Premier League", "home": "Liverpool", "away": "Arsenal", "kickoff": "2026-11-01 16:30", "where": "[ADD UK broadcaster]"},
+    {"sport": "Football", "competition": "LaLiga", "home": "Real Madrid", "away": "Real Racing Club", "kickoff": "2026-11-01 15:15", "where": "[ADD UK broadcaster]"}
+  ]
+}

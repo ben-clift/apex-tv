@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Apex Dashboard</title>
+<link rel="stylesheet" href="shared/common.css"></head><body>
+<div class="top"><h1>Apex Dashboard</h1><div><span id="mode" class="dim"></span> <span class="btn f" id="toggle">Switch view</span> <span class="btn f" id="reload">Reload</span></div></div>
+<div id="stage" style="height:900px"></div>
+<script>window.HINTS='<span class="c-r">RED reload</span><span class="c-g">GREEN switch view</span>'</script>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// Two views. "Live" embeds your Streamlit Creator Finder. "Funnel" is a simple wall display from a
+// stats JSON (dashboard-stats.json next to this file, or any URL you put in statsUrl in config.js).
+var live=true, stage=A.$("#stage");
+function showLive(){
+  var u=A.cfg.dashboardUrl;
+  if(!u||u.indexOf("YOUR-APP")>-1){stage.innerHTML='<div class="wrap"><h2>Set dashboardUrl in shared/config.js</h2><p class="dim">Then run build.py again. Showing the funnel view instead.</p></div>';return showFunnel()}
+  stage.innerHTML="";var f=A.el("iframe",{src:u,style:"width:100%;height:100%;border:0;background:#fff"});stage.appendChild(f);
+  A.$("#mode").textContent="Live view";
+}
+function showFunnel(){
+  var url=A.cfg.statsUrl||"dashboard-stats.json";
+  A.getJSON(url).then(function(d){
+    var st=d.stages||[],max=Math.max.apply(null,st.map(function(s){return s.n}).concat([1]));
+    stage.innerHTML='<div class="wrap"><h2>Pipeline funnel</h2></div>';
+    var box=A.el("div",{class:"wrap"});
+    st.forEach(function(s){var row=A.el("div",{style:"display:flex;align-items:center;gap:24px;margin:10px 0"});
+      row.appendChild(A.el("div",{style:"width:300px",text:s.name}));
+      row.appendChild(A.el("div",{style:"height:44px;border-radius:8px;background:var(--gold);width:"+Math.max(8,Math.round(1100*s.n/max))+"px"}));
+      row.appendChild(A.el("div",{text:String(s.n)}));box.appendChild(row)});
+    stage.appendChild(box);
+    stage.appendChild(A.el("div",{class:"wrap dim",text:(d.note||"")+(d.updated?"  Updated "+d.updated:"")}));
+    A.$("#mode").textContent="Funnel view";
+  }).catch(function(e){stage.innerHTML='<div class="wrap"><h2>Could not load stats</h2><p class="dim">'+e.message+'</p></div>'});
+}
+function render(){live?showLive():showFunnel()}
+A.$("#toggle").onclick=function(){live=!live;render()};
+A.$("#reload").onclick=render;
+A.on("red",render);A.on("green",function(){live=!live;render()});
+render();setInterval(function(){if(!live)showFunnel()},120000);
+</script></body></html>

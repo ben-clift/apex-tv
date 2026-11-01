@@ -1,0 +1,9 @@
+{
+  "questions": [
+    {"q": "Which planet is known as the Red Planet?", "a": "Mars"},
+    {"q": "How many strings does a standard bass guitar have?", "a": "Four"},
+    {"q": "In which English county is Marlborough?", "a": "Wiltshire"},
+    {"q": "What does BPM stand for?", "a": "Beats per minute"},
+    {"q": "Which ocean current's warm phase is called El Nino?", "a": "The Pacific (ENSO) cycle"}
+  ]
+}

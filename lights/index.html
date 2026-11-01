@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Lights Control</title>
+<link rel="stylesheet" href="shared/common.css"></head><body>
+<div class="top"><h1>Lights Control</h1><span class="dim" id="st">WLED at <span id="ip"></span></span></div>
+<div class="wrap"><div id="scenes" class="grid" style="grid-template-columns:repeat(4,1fr)"></div>
+<h2 style="margin-top:36px">Beat flash <span id="beat" class="dim">off</span></h2>
+<p class="dim">Press YELLOW in time with the music to set the tempo, GREEN to start or stop. Flashes are capped at 3 a second and use gentle brightness pulses, never full white strobes.</p>
+<p><span class="btn f" id="off">All off</span> <span class="btn f" id="on">All on</span></p></div>
+<script>window.HINTS='<span class="c-g">GREEN beat on/off</span><span class="c-y">YELLOW tap tempo</span><span class="c-r">RED lights off</span>'</script>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// Talks straight to WLED's JSON API on your local network: POST http://IP/json/state. Never touches audio.
+var ip=A.store("wled")||A.cfg.wledIp;A.$("#ip").textContent=ip;
+var scenes=[{n:"Warm white",c:[255,170,80]},{n:"Party pink",c:[255,40,150]},{n:"Ocean blue",c:[20,90,255]},{n:"Green room",c:[30,220,90]},{n:"Amber",c:[255,120,0]},{n:"Violet",c:[150,60,255]},{n:"Cool white",c:[200,220,255]},{n:"Rainbow",fx:9}];
+function send(body){return fetch("http://"+ip+"/json/state",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+  .then(function(r){if(!r.ok)throw new Error("WLED said "+r.status)}).catch(function(e){A.toast("Cannot reach WLED at "+ip+". Same Wi-Fi? "+e.message,4000)})}
+scenes.forEach(function(s){var t=A.el("div",{class:"tile f",tabindex:"0",text:s.n});
+  if(s.c)t.style.borderBottom="10px solid rgb("+s.c.join(",")+")";
+  t.onclick=function(){send({on:true,bri:160,seg:[s.fx!==undefined?{fx:s.fx}:{fx:0,col:[s.c]}]})};A.$("#scenes").appendChild(t)});
+A.$("#off").onclick=function(){send({on:false})};A.$("#on").onclick=function(){send({on:true})};A.on("red",function(){send({on:false})});
+var bpm=120,taps=[],timer=null,hi=false,last=0;
+function tick(){var n=Date.now();if(n-last<334)return;last=n;hi=!hi;send({bri:hi?200:90,transition:2})}   // max 3 updates a second
+function run(on){clearInterval(timer);timer=null;if(on){var ms=Math.max(334,60000/bpm);timer=setInterval(tick,ms)}A.$("#beat").textContent=on?bpm+" BPM":"off"}
+A.on("green",function(){run(!timer)});
+A.on("yellow",function(){var n=Date.now();if(taps.length&&n-taps[taps.length-1]>2000)taps=[];taps.push(n);
+  if(taps.length>1){var s=0;for(var i=1;i<taps.length;i++)s+=taps[i]-taps[i-1];bpm=Math.max(60,Math.min(180,Math.round(60000/(s/(taps.length-1)))));if(timer)run(true);A.$("#beat").textContent=bpm+" BPM"}});
+</script></body></html>

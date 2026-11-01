@@ -1,0 +1,12 @@
+{
+  "note": "SAMPLE numbers. Replace with real figures exported from the Creator Finder.",
+  "updated": "",
+  "stages": [
+    {"name": "Found", "n": 0},
+    {"name": "Flagged", "n": 0},
+    {"name": "Contacted", "n": 0},
+    {"name": "Signed", "n": 0},
+    {"name": "Live", "n": 0},
+    {"name": "Paid", "n": 0}
+  ]
+}

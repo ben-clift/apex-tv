@@ -1,0 +1,9 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Apex Hub</title>
+<link rel="stylesheet" href="shared/common.css"></head><body>
+<div class="top"><h1>Apex Hub</h1><span class="dim">Your web tools in one place</span></div>
+<div class="wrap grid" id="g" style="grid-template-columns:repeat(4,1fr)"></div>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// Tiles come from hubLinks in config.js. Each opens the page full screen. Back returns to the hub.
+(A.cfg.hubLinks||[]).forEach(function(l){var t=A.el("a",{class:"tile f",href:l.url,tabindex:"0",text:l.name,style:"color:inherit;text-decoration:none"});A.$("#g").appendChild(t)});
+</script></body></html>

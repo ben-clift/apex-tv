@@ -1,0 +1,108 @@
+<!doctype html><html><head><meta charset="utf-8"><title>BeatDeck Visuals</title>
+<link rel="stylesheet" href="shared/common.css">
+<style>
+canvas{position:fixed;inset:0;width:100%;height:100%;background:#000}
+#name{position:fixed;left:40px;bottom:70px;font-size:.8em;color:#fff;text-shadow:0 0 8px #000;opacity:0;transition:opacity .6s;z-index:3}
+#menu{position:fixed;right:0;top:0;bottom:0;width:640px;background:#0b0c10ee;border-left:3px solid var(--gold);padding:36px;z-index:5;display:none;overflow:auto}
+.row{display:flex;justify-content:space-between;padding:16px 20px;margin:6px 0;background:var(--panel)}
+#msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;z-index:9;background:#000;padding:80px}
+</style></head><body>
+<canvas id="c"></canvas><div id="name"></div>
+<div id="msg"></div>
+<div id="menu"><h2>BeatDeck Visuals</h2><div id="rows"></div><p class="dim" style="font-size:.7em">OK or MENU (Yellow) closes. Left and right change a value.</p></div>
+<script>window.HINTS='<span class="c-y">YELLOW settings</span><span class="c-r">RED next preset</span><span class="c-g">GREEN random</span>◀ ▶ previous / next preset<span>Tap tempo: OK</span>'</script>
+<script>window.EXTRA=[{t:"Prev",c:"#ddd",fn:function(){A.call("left")}},{t:"Next",c:"#ddd",fn:function(){A.call("right")}},{t:"Tap tempo",c:"#ddd",fn:function(){A.call("enter")}},{t:"BPM +",c:"#ddd",fn:function(){A.call("up")}},{t:"BPM -",c:"#ddd",fn:function(){A.call("down")}}]</script>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script src="lib/butterchurn.min.js"></script><script src="lib/butterchurnPresets.min.js"></script>
+<script>
+// MilkDrop visuals (the open source butterchurn engine, MIT) on the TV.
+// A TV cannot hear your phone, so the beat comes from a silent synthetic kick and hat pattern at your BPM.
+// BeatDeck on the phone can steer this screen by publishing a small JSON (stateUrl in config.js):
+//   {"bpm":126,"preset":"name or number","calm":true,"cycle":30,"brightness":80,"beatAt":1730480000123}
+// beatAt (ms since 1970) lines the TV beat up with the phone beat. Everything works without it, using the remote.
+var C=A.cfg, S=Object.assign({bpm:124,preset:0,cycle:30,calm:true,brightness:85,showName:true,blend:2.7,sensitivity:1.0,seed:0},A.store("bv")||{});
+function save(){A.store("bv",S)}
+var BC=window.butterchurn&&(window.butterchurn.default||window.butterchurn),BP=window.butterchurnPresets&&(window.butterchurnPresets.default||window.butterchurnPresets);
+var cv=A.$("#c"),viz,actx,gainNode,src,lastBpm=0,presets={},keys=[];
+
+function fail(m){var e=A.$("#msg");e.style.display="flex";e.innerHTML="<div><h2>Visuals not available</h2><p class='dim'>"+m+"</p></div>"}
+if(!BC||!BP){fail("The MilkDrop library did not load.")}
+else{try{
+  var P=BP.getPresets?BP.getPresets():BP;
+  presets=P;keys=Object.keys(P).sort();
+}catch(e){if(e)fail(e.message||e)}}
+
+function size(){cv.width=Math.min(innerWidth,1920);cv.height=Math.min(innerHeight,1080);if(viz)viz.setRendererSize(cv.width,cv.height)}
+
+// ---------- silent beat source ----------
+function makeLoop(bpm){
+  var sr=actx.sampleRate,beat=Math.round(sr*60/bpm),bars=4,len=beat*4*bars,buf=actx.createBuffer(1,len,sr),d=buf.getChannelData(0);
+  function kick(at){var n=Math.min(Math.round(sr*.25),len-at);for(var i=0;i<n;i++){var t=i/sr;d[at+i]+=Math.sin(2*Math.PI*(150*Math.exp(-t*30)+45)*t)*Math.exp(-t*12)*.9}}
+  function hat(at){var n=Math.min(Math.round(sr*.05),len-at);for(var i=0;i<n;i++){d[at+i]+=(Math.random()*2-1)*Math.exp(-i/sr*90)*.25}}
+  function clap(at){var n=Math.min(Math.round(sr*.12),len-at);for(var i=0;i<n;i++){d[at+i]+=(Math.random()*2-1)*Math.exp(-i/sr*30)*.35}}
+  for(var b=0;b<4*bars;b++){kick(b*beat);if(b%4===1||b%4===3)clap(b*beat);hat(b*beat+Math.round(beat/2))}
+  return buf}
+function startBeat(){
+  if(src){try{src.stop()}catch(e){}}
+  if(viz&&gainNode){try{viz.disconnectAudio(gainNode)}catch(e){}}
+  src=actx.createBufferSource();src.buffer=makeLoop(S.bpm);src.loop=true;
+  gainNode=actx.createGain();gainNode.gain.value=S.sensitivity;src.connect(gainNode);   // never connected to the speakers
+  if(viz)viz.connectAudio(gainNode);
+  var off=0;if(S.beatAt){var spb=60000/S.bpm;off=(((Date.now()-S.beatAt)%(spb*16))+spb*16)%(spb*16)/1000}
+  src.start(0,off);lastBpm=S.bpm}
+
+// ---------- visuals ----------
+function setPreset(i,blend){
+  if(!keys.length)return;S.preset=((i%keys.length)+keys.length)%keys.length;
+  viz.loadPreset(presets[keys[S.preset]],blend===undefined?(S.calm?S.blend+2:S.blend):blend);save();
+  var n=A.$("#name");n.textContent=keys[S.preset].replace(/\s+/g," ");n.style.opacity=S.showName?1:0;setTimeout(function(){n.style.opacity=0},4000)}
+function applyLook(){cv.style.filter="brightness("+(S.brightness/100)+")"}
+function frame(){if(viz)viz.render();requestAnimationFrame(frame)}
+var cycleTimer;function cycle(){clearInterval(cycleTimer);if(S.cycle>0)cycleTimer=setInterval(function(){if(S.cycle>0)setPreset(Math.floor(Math.random()*keys.length))},S.cycle*1000)}
+
+if(keys.length){try{
+  size();addEventListener("resize",size);
+  actx=new (window.AudioContext||window.webkitAudioContext)();
+  viz=BC.createVisualizer(actx,cv,{width:cv.width,height:cv.height,pixelRatio:1,textureRatio:1});
+  startBeat();setPreset(S.preset,0);applyLook();cycle();frame();
+}catch(e){fail("Could not start MilkDrop: "+(e.message||e))}}
+
+// ---------- settings menu ----------
+var menu=A.$("#menu"),rows=A.$("#rows"),sel=0,open=false;
+var items=[
+ {n:"Preset",get:function(){return (S.preset+1)+"/"+keys.length},ch:function(d){setPreset(S.preset+d)}},
+ {n:"Auto change (seconds, 0 off)",get:function(){return S.cycle},ch:function(d){var o=[0,10,20,30,60,120];S.cycle=o[(o.indexOf(S.cycle)+d+o.length)%o.length];cycle();save()}},
+ {n:"BPM",get:function(){return S.bpm},ch:function(d){S.bpm=Math.max(60,Math.min(200,S.bpm+d));startBeat();save()}},
+ {n:"Calm mode (slow blends)",get:function(){return S.calm?"On":"Off"},ch:function(){S.calm=!S.calm;save()}},
+ {n:"Brightness",get:function(){return S.brightness+"%"},ch:function(d){S.brightness=Math.max(20,Math.min(100,S.brightness+d*5));applyLook();save()}},
+ {n:"Beat strength",get:function(){return S.sensitivity.toFixed(1)},ch:function(d){S.sensitivity=Math.max(.2,Math.min(2,Math.round((S.sensitivity+d*.2)*10)/10));startBeat();save()}},
+ {n:"Show preset name",get:function(){return S.showName?"On":"Off"},ch:function(){S.showName=!S.showName;save()}}
+];
+function drawMenu(){rows.innerHTML="";items.forEach(function(it,k){var r=A.el("div",{class:"row"+(k===sel?" on":""),style:k===sel?"border:4px solid var(--gold);border-radius:12px":""});
+  r.appendChild(A.el("span",{text:it.n}));r.appendChild(A.el("b",{class:"c-y",text:String(it.get())}));rows.appendChild(r)})}
+function toggleMenu(){open=!open;menu.style.display=open?"block":"none";if(open)drawMenu()}
+A.on("yellow",toggleMenu);
+A.on("red",function(){setPreset(S.preset+1)});A.on("green",function(){setPreset(Math.floor(Math.random()*keys.length))});
+A.on("up",function(){if(open){sel=(sel+items.length-1)%items.length;drawMenu()}else{S.bpm=Math.min(200,S.bpm+1);startBeat();save()}});
+A.on("down",function(){if(open){sel=(sel+1)%items.length;drawMenu()}else{S.bpm=Math.max(60,S.bpm-1);startBeat();save()}});
+A.on("left",function(){if(open){items[sel].ch(-1);drawMenu()}else setPreset(S.preset-1)});
+A.on("right",function(){if(open){items[sel].ch(1);drawMenu()}else setPreset(S.preset+1)});
+var taps=[];
+A.on("enter",function(){if(open){toggleMenu();return}var n=Date.now();if(taps.length&&n-taps[taps.length-1]>2000)taps=[];taps.push(n);
+  if(taps.length>2){var s=0;for(var i=1;i<taps.length;i++)s+=taps[i]-taps[i-1];S.bpm=Math.max(60,Math.min(200,Math.round(60000/(s/(taps.length-1)))));S.beatAt=n;startBeat();save();A.toast(S.bpm+" BPM")}});
+A.on("back",function(){if(open){toggleMenu();return}return false});
+
+// ---------- optional steering from the phone ----------
+function pull(){var u=C.beatdeckStateUrl;if(!u)return;
+  A.getJSON(u+(u.indexOf("?")>-1?"&":"?")+"t="+Date.now(),null,5000).then(function(d){
+    var rebeat=false;
+    if(typeof d.bpm==="number"&&Math.abs(d.bpm-S.bpm)>=1){S.bpm=Math.round(d.bpm);rebeat=true}
+    if(typeof d.beatAt==="number"&&d.beatAt!==S.beatAt){S.beatAt=d.beatAt;rebeat=true}
+    if(typeof d.calm==="boolean")S.calm=d.calm;
+    if(typeof d.brightness==="number"){S.brightness=Math.max(20,Math.min(100,d.brightness));applyLook()}
+    if(typeof d.cycle==="number"&&d.cycle!==S.cycle){S.cycle=d.cycle;cycle()}
+    if(d.preset!==undefined&&d.preset!==S.remotePreset){S.remotePreset=d.preset;
+      var k=typeof d.preset==="number"?d.preset:keys.findIndex(function(x){return x.toLowerCase().indexOf(String(d.preset).toLowerCase())>-1});if(k>-1)setPreset(k)}
+    if(rebeat&&viz)startBeat();save()}).catch(function(){})}
+setInterval(pull,3000);pull();
+</script></body></html>

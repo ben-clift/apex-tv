@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Where To Watch</title>
+<link rel="stylesheet" href="shared/common.css"></head><body>
+<div class="top"><h1>Where To Watch</h1><span class="dim" id="sub"></span></div>
+<div class="wrap"><div id="tabs" style="margin-bottom:20px"></div><div id="list"></div></div>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// A guide, not a player. It lists kick off times and the official broadcaster. No streams are
+// included, so it needs no sports rights. Edit fixtures.json (times in UK time, 24h, YYYY-MM-DD HH:MM).
+var all=[],sport="All";
+function when(f){return new Date(f.kickoff.replace(" ","T")+":00")}
+function render(){
+  var now=new Date(),box=A.$("#list");box.innerHTML="";
+  var rows=all.filter(function(f){return sport==="All"||f.sport===sport}).sort(function(a,b){return when(a)-when(b)});
+  rows.forEach(function(f){
+    var d=when(f),mins=Math.round((d-now)/60000),state=mins>-120?(mins>0?(mins>=1440?Math.floor(mins/1440)+" days":mins>=60?Math.floor(mins/60)+"h "+(mins%60)+"m":mins+" min"):"Under way or just finished"):"Ended";
+    if(mins<-240)return;
+    var row=A.el("div",{class:"panel f",tabindex:"0",style:"margin:10px 0;display:grid;grid-template-columns:1.6fr 1fr 1.2fr 1fr;gap:20px"});
+    row.appendChild(A.el("div",{text:f.home+" v "+f.away}));row.appendChild(A.el("div",{class:"dim",text:f.competition}));
+    row.appendChild(A.el("div",{class:"c-y",text:d.toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}));
+    row.appendChild(A.el("div",{class:f.where.indexOf("[ADD")>-1?"dim":"c-g",text:f.where+" ("+state+")"}));
+    box.appendChild(row)});
+  if(!rows.length)box.appendChild(A.el("p",{class:"dim",text:"No fixtures. Edit fixtures.json."}))}
+function tabs(){var s=["All"];all.forEach(function(f){if(s.indexOf(f.sport)<0)s.push(f.sport)});var t=A.$("#tabs");t.innerHTML="";
+  s.forEach(function(n){var b=A.el("span",{class:"btn f",tabindex:"0",text:n,style:"margin-right:12px"});b.onclick=function(){sport=n;render()};t.appendChild(b)})}
+A.getJSON("fixtures.json").then(function(d){all=d.fixtures;A.$("#sub").textContent=d.note||"";tabs();render()}).catch(function(e){A.$("#list").textContent=e.message});
+setInterval(render,60000);
+</script></body></html>

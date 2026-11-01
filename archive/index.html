@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Family Archive</title>
+<link rel="stylesheet" href="shared/common.css"><style>#img{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;transition:opacity .8s}#cap{position:fixed;left:0;right:0;bottom:60px;text-align:center;padding:20px 80px;background:linear-gradient(#0000,#000c);font-size:1.1em}#yr{position:fixed;top:30px;right:50px;font-size:2em;color:var(--gold);text-shadow:0 0 10px #000}</style></head><body>
+<img id="img" alt=""><div id="yr"></div><div id="cap"></div>
+<script>window.HINTS='◀ ▶ previous / next<span class="c-g">GREEN play/pause</span><span class="c-r">RED shuffle</span>'</script>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// Put photos in photos/ and list them in archive.json. Nothing is uploaded anywhere. Keep each file small
+// (under 1 MB, 1920 px wide) so the TV loads fast. Avoid naming living relatives you have not asked.
+var items=[],i=0,playing=true,timer;
+function show(n){if(!items.length)return;i=(n+items.length)%items.length;var it=items[i];var im=A.$("#img");im.style.opacity=0;
+  setTimeout(function(){im.src=it.file;im.onload=function(){im.style.opacity=1}},400);
+  A.$("#cap").textContent=it.caption||"";A.$("#yr").textContent=it.year||""}
+function start(){clearInterval(timer);if(playing)timer=setInterval(function(){show(i+1)},9000)}
+A.on("right",function(){show(i+1);start()});A.on("left",function(){show(i-1);start()});
+A.on("green",function(){playing=!playing;A.toast(playing?"Playing":"Paused");start()});A.on("play",function(){playing=!playing;start()});
+A.on("red",function(){items.sort(function(){return Math.random()-.5});show(0)});
+A.getJSON("archive.json").then(function(d){items=d.items.sort(function(a,b){return (a.year||0)-(b.year||0)});show(0);start()}).catch(function(e){A.$("#cap").textContent=e.message});
+</script></body></html>

@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Ad Preview</title>
+<link rel="stylesheet" href="shared/common.css"><style>video{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#000;max-width:100%;max-height:100%}#hud{position:fixed;top:20px;left:30px;z-index:2;text-shadow:0 0 8px #000}</style></head><body>
+<div id="hud"></div><video id="v" controls></video>
+<script>window.HINTS='◀ ▶ previous / next ad<span class="c-g">GREEN safe-area guide</span><span class="c-r">RED loop</span>'</script>
+<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<script>
+// Plays finished Hookreel ads (mp4 links from the Hookreel Earlier ads list, or any mp4) on a big screen.
+// The guide box shows where phone apps cover the edges, so you can check hooks and captions are not hidden.
+var urls=A.store("ads")||A.cfg.adUrls||[],i=0,guide=false,v=A.$("#v");
+function load(n){if(!urls.length){A.$("#hud").textContent="No ads yet. Add mp4 links to adUrls in config.js, or press OK to add one by keyboard.";return}
+  i=(n+urls.length)%urls.length;v.src=urls[i];v.play&&v.play();A.$("#hud").textContent="Ad "+(i+1)+" of "+urls.length}
+A.on("right",function(){load(i+1)});A.on("left",function(){load(i-1)});
+A.on("red",function(){v.loop=!v.loop;A.toast(v.loop?"Loop on":"Loop off")});
+A.on("green",function(){guide=!guide;var g=A.$("#g");if(g)g.remove();if(guide){var r=v.getBoundingClientRect();
+  var d=A.el("div",{id:"g",style:"position:fixed;border:3px dashed #3fb950;pointer-events:none;z-index:3;left:"+(r.left+r.width*.06)+"px;width:"+r.width*.88+"px;top:"+(r.top+r.height*.1)+"px;height:"+r.height*.72+"px"});document.body.appendChild(d)}});
+A.on("enter",function(){if(!urls.length){var u=prompt("Paste an mp4 link");if(u){urls.push(u);A.store("ads",urls);load(0)}}else{v.paused?v.play():v.pause()}});
+A.on("play",function(){v.paused?v.play():v.pause()});
+v.onerror=function(){A.toast("Could not play that file. Is it an https mp4?",4000)};
+load(0);
+</script></body></html>
