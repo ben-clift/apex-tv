@@ -17,21 +17,21 @@
 
   // ---------- the app list (home page and hub read this) ----------
   var APPS=[
-    {id:"kapang",name:"Kapang",desc:"Free TV channels, opened full screen",icon:"tv",feat:true},
-    {id:"beatdeckvis",name:"BeatDeck Visuals",desc:"MilkDrop visuals with tempo and settings",icon:"wave",feat:true},
-    {id:"requests",name:"Party Requests",desc:"Friends scan a code and suggest tracks",icon:"qr",needs:function(c){return !c.supabaseUrl},need:"Needs a Supabase link"},
-    {id:"fixtures",name:"Where To Watch",desc:"Fixtures and the official place to watch",icon:"cal"},
-    {id:"hub",name:"Link Hub",desc:"Your favourite sites, one tap away",icon:"grid"},
-    {id:"clock",name:"Ambient Clock",desc:"Big clock and weather for a spare screen",icon:"clock"},
-    {id:"dashboard",name:"Creator Dashboard",desc:"Your Creator Finder on the big screen",icon:"chart",needs:function(c){return !c.dashboardUrl},need:"Needs your app link"},
-    {id:"lights",name:"Lights",desc:"WLED scenes and a gentle beat flash",icon:"bulb",labs:true,needs:function(c){return !c.wledIp},need:"Needs the strip's address"},
-    {id:"nowplaying",name:"Now Playing",desc:"DJ board: current and next track",icon:"radio",labs:true,needs:function(c){return !c.nowPlayingUrl},need:"Needs a data link"},
-    {id:"adpreview",name:"Ad Preview",desc:"Check Hookreel ads on a big screen",icon:"film",labs:true,needs:function(c){return !(c.adUrls&&c.adUrls.length)},need:"Needs video links"},
-    {id:"fastcheck",name:"Stream Check",desc:"Test your own HLS or mp4 streams",icon:"play",labs:true,needs:function(c){return !(c.streams&&c.streams.length)},need:"Needs stream links"},
-    {id:"archive",name:"Family Archive",desc:"Photo slideshow with captions",icon:"image",labs:true,need:"Add your photos",needs:function(){return true}},
-    {id:"quiz",name:"Quiz Night",desc:"Question screen and team scores",icon:"quiz",labs:true},
-    {id:"scoreboard",name:"Scoreboard",desc:"Two scores and a match clock",icon:"score",labs:true},
-    {id:"timers",name:"Timers",desc:"Kitchen and party countdowns",icon:"timer",labs:true}
+    {id:"kapang",ac:"#ff5d8a",name:"Kapang",desc:"Free TV channels, opened full screen",icon:"tv",feat:true},
+    {id:"beatdeckvis",ac:"#7c5cff",name:"BeatDeck Visuals",desc:"MilkDrop visuals with tempo and settings",icon:"wave",feat:true},
+    {id:"requests",ac:"#ff8a3d",name:"Party Requests",desc:"Friends scan a code and suggest tracks",icon:"qr",needs:function(c){return !c.supabaseUrl},need:"Needs a Supabase link"},
+    {id:"fixtures",ac:"#46d37f",name:"Where To Watch",desc:"Fixtures and the official place to watch",icon:"cal"},
+    {id:"hub",ac:"#5b9bff",name:"Link Hub",desc:"Your favourite sites, one tap away",icon:"grid"},
+    {id:"clock",ac:"#b8c0d4",name:"Ambient Clock",desc:"Big clock and weather for a spare screen",icon:"clock"},
+    {id:"dashboard",ac:"#f2b632",name:"Creator Dashboard",desc:"Your Creator Finder on the big screen",icon:"chart",needs:function(c){return !c.dashboardUrl},need:"Needs your app link"},
+    {id:"lights",ac:"#ffd36e",name:"Lights",desc:"WLED scenes and a gentle beat flash",icon:"bulb",labs:true,needs:function(c){return !c.wledIp},need:"Needs the strip's address"},
+    {id:"nowplaying",ac:"#38d6c0",name:"Now Playing",desc:"DJ board: current and next track",icon:"radio",labs:true,needs:function(c){return !c.nowPlayingUrl},need:"Needs a data link"},
+    {id:"adpreview",ac:"#ff7a59",name:"Ad Preview",desc:"Check Hookreel ads on a big screen",icon:"film",labs:true,needs:function(c){return !(c.adUrls&&c.adUrls.length)},need:"Needs video links"},
+    {id:"fastcheck",ac:"#8b9bff",name:"Stream Check",desc:"Test your own HLS or mp4 streams",icon:"play",labs:true,needs:function(c){return !(c.streams&&c.streams.length)},need:"Needs stream links"},
+    {id:"archive",ac:"#d9a066",name:"Family Archive",desc:"Photo slideshow with captions",icon:"image",labs:true,need:"Add your photos",needs:function(){return true}},
+    {id:"quiz",ac:"#5bd0ff",name:"Quiz Night",desc:"Question screen and team scores",icon:"quiz",labs:true},
+    {id:"scoreboard",ac:"#ff5d6c",name:"Scoreboard",desc:"Two scores and a match clock",icon:"score",labs:true},
+    {id:"timers",ac:"#e6c84c",name:"Timers",desc:"Kitchen and party countdowns",icon:"timer",labs:true}
   ];
 
   // ---------- header ----------

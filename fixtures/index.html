@@ -14,13 +14,14 @@
 <script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
 var all=[],sport="All";
+function crest(n){var w=n.replace(/^(SSC|AC|FC|Real)\s+/i,"").split(/\s+/),ini=(w[0][0]+(w[1]?w[1][0]:w[0][1]||"")).toUpperCase(),h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%360;return '<span class="crest" style="background:hsl('+h+',70%,62%)">'+A.esc(ini)+'</span>'}
 function when(f){return new Date(f.kickoff.replace(" ","T")+":00")}
 function render(){var now=new Date(),box=A.$("#list");box.innerHTML="";
   var rows=all.filter(function(f){return sport==="All"||f.sport===sport&&true}).filter(function(f){return (now-when(f))<4*3600000}).sort(function(a,b){return when(a)-when(b)});
   if(!rows.length){A.state(box,"empty","Nothing coming up","Add fixtures to fixtures.json in the repository.");return}
-  rows.forEach(function(f){var d=when(f),mins=Math.round((d-now)/60000),st=mins>0?(mins>=1440?"in "+Math.floor(mins/1440)+" days":mins>=60?"in "+Math.floor(mins/60)+"h "+(mins%60)+"m":"in "+mins+" min"):"under way";
+  rows.forEach(function(f){var d=when(f),mins=Math.round((d-now)/60000),st=mins>0?(mins>=1440?"in "+Math.floor(mins/1440)+" days":mins>=60?"in "+Math.floor(mins/60)+"h "+(mins%60)+"m":"in "+mins+" min"):(mins>-130?'<span class="live">LIVE</span>':"Full time");
     var unset=/\[ADD/.test(f.where);
-    var c=A.el("div",{class:"fx"},'<div><div class="m">'+A.esc(f.home)+' v '+A.esc(f.away)+'</div><div class="c">'+A.esc(f.competition)+'</div></div><div class="t">'+d.toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+'<div class="small dim">'+st+'</div></div><div class="wh">'+(unset?'<span class="chip warn">Broadcaster not added yet</span>':'<span class="chip ok">'+A.esc(f.where)+'</span>')+'</div>');box.appendChild(c)})}
+    var c=A.el("div",{class:"fx"},'<div><div class="m" style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">'+crest(f.home)+A.esc(f.home)+' <span class="dim">v</span> '+crest(f.away)+A.esc(f.away)+'</div><div class="c">'+A.esc(f.competition)+'</div></div><div class="t">'+d.toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+'<div class="small dim">'+st+'</div></div><div class="wh">'+(unset?'<span class="chip warn">Broadcaster not added yet</span>':'<span class="chip ok">'+A.esc(f.where)+'</span>')+'</div>');box.appendChild(c)})}
 function tabs(){var s=["All"];all.forEach(function(f){if(s.indexOf(f.sport)<0)s.push(f.sport)});var t=A.$("#tabs");t.innerHTML="";
   s.forEach(function(n){var b=A.el("button",{class:"btn f"+(n===sport?" primary":""),type:"button"},A.esc(n));b.onclick=function(){sport=n;tabs();render()};t.appendChild(b)});A.fx()}
 A.state("#list","load");

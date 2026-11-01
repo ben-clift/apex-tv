@@ -3,48 +3,53 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Apex TV</title><meta name="description" content="Your TV and phone toolkit: free channels, MilkDrop visuals, party tools and more.">
 <meta name="theme-color" content="#07080c"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="shared/style.css">
-<style>
-.lead{max-width:44rem;margin:.6rem 0 1.4rem;font-size:1.05rem}
-.hero-grid{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))}
-.card.hero h3{font-size:1.3rem}
-.cta{margin-top:.8rem}
-.foot{margin:2.4rem 0 0;display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
-.logo{font-weight:900;letter-spacing:-.03em}
-</style></head><body>
+<link rel="stylesheet" href="shared/style.css"></head><body>
 <header id="appbar" data-home="1" data-title="Apex TV" data-icon="tv" data-sub="Your screens, your tools"></header>
 <main class="page">
-  <h1>Welcome back.</h1>
-  <p class="lead">Free TV, music visuals and party tools for your TV and phone. Pick something to open it full screen.</p>
+  <h1 class="greet rise" id="greet"></h1>
+  <div class="status rise" style="--i:1"><span class="pill" id="date"></span><span class="pill hide" id="wx"></span><span class="pill" id="ready"></span></div>
 
-  <div class="hero-grid" id="feat"></div>
+  <div class="posters">
+    <a class="poster kap f rise" style="--i:2" href="kapang/" aria-label="Open Kapang">
+      <div class="art"></div><div class="screen" aria-hidden="true"><i></i></div>
+      <h3>Kapang</h3><p>Free TV channels, opened full screen on your TV.</p><span class="btn primary">Watch now</span>
+    </a>
+    <a class="poster bdv f rise" style="--i:3" href="beatdeckvis/" aria-label="Open BeatDeck Visuals">
+      <div class="art"></div><div class="eq" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+      <h3>BeatDeck Visuals</h3><p>MilkDrop visuals that pulse at your tempo, with settings.</p><span class="btn primary">Start visuals</span>
+    </a>
+  </div>
+
   <div class="sec"><h2>More for your TV</h2><span id="cnt1"></span></div>
   <div class="grid" id="main"></div>
 
-  <div class="sec"><h2>Labs</h2><span>Early versions. Some need a little setup.</span></div>
-  <div class="grid" id="labs"></div>
+  <details class="labs" id="labsbox">
+    <summary class="f" tabindex="0"><h2>Labs</h2><span class="small dim">Early versions. Some need a little setup.</span></summary>
+    <div class="grid" id="labs"></div>
+  </details>
 
-  <div class="foot">
-    <a class="btn f" href="settings/">Settings</a>
-    <span class="small dim" id="inst">On your phone you can add this site to your home screen from the browser menu.</span>
-  </div>
+  <div class="sec" style="margin-top:2rem"><span class="small dim" id="inst">Add this site to your phone's home screen from the browser menu to open it like an app.</span><a class="btn f" href="settings/">Settings</a></div>
 </main>
 <script src="shared/config.js"></script><script src="shared/icons.js"></script><script src="shared/app.js"></script>
 <script>
 (function(){
-  function card(a,hero){
-    var need=A.needsSetup(a);
-    var c=A.el("a",{class:"card f"+(hero?" hero":""),href:a.id+"/"});
+  var h=new Date().getHours(),g=h<5?"Still up?":h<12?"Good morning":h<18?"Good afternoon":"Good evening";
+  A.$("#greet").innerHTML=g==="Still up?"?g:g.split(" ")[0]+" <em>"+g.split(" ").slice(1).join(" ")+"</em>";
+  A.$("#date").textContent=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+  var ready=0;
+  function card(a,i){
+    var need=A.needsSetup(a);if(!need)ready++;
+    var c=A.el("a",{class:"card f rise",href:a.id+"/",style:"--ac:"+(a.ac||"#f2b632")+";--i:"+(i+4)});
     c.innerHTML='<div class="ico">'+ICON(a.icon)+'</div><div style="min-width:0"><h3>'+A.esc(a.name)+'</h3><p>'+A.esc(a.desc)+'</p>'+
-      (need?'<div style="margin-top:.5rem"><span class="chip warn">'+A.esc(a.need||"Needs setup")+'</span></div>':"")+
-      (hero?'<div class="cta"><span class="btn primary">Open '+ICON("next")+'</span></div>':"")+'</div>';
+      (need?'<div style="margin-top:.5rem"><span class="chip warn">'+A.esc(a.need||"Needs setup")+'</span></div>':"")+'</div><span class="go">'+ICON("next")+'</span>';
     return c}
-  var feat=A.$("#feat"),main=A.$("#main"),labs=A.$("#labs");
-  A.apps.forEach(function(a){
-    if(a.feat)feat.appendChild(card(a,true));
-    else if(a.labs)labs.appendChild(card(a));
-    else main.appendChild(card(a));
-  });
+  var main=A.$("#main"),labs=A.$("#labs"),n=0;
+  A.apps.forEach(function(a){if(a.feat)return;(a.labs?labs:main).appendChild(card(a,n++))});
+  A.$("#ready").textContent=(ready+2)+" of "+(A.apps.length)+" ready to use";
+  A.$("#labsbox").addEventListener("toggle",function(){A.fx()});
+  // small weather chip (Open-Meteo, no key). Hidden if it cannot load.
+  var P=A.cfg.place;
+  if(P&&P.lat){A.getJSON("https://api.open-meteo.com/v1/forecast?latitude="+P.lat+"&longitude="+P.lon+"&current=temperature_2m&timezone=auto",null,5000).then(function(d){var w=A.$("#wx");w.textContent=P.name+" "+Math.round(d.current.temperature_2m)+"°C";w.classList.remove("hide")}).catch(function(){})}
   A.fx();
 })();
 </script></body></html>
