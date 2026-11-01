@@ -129,3 +129,14 @@ details.labs>summary h2::after{content:" +";color:var(--gold)}details.labs[open]
   .poster .screen{width:50%;top:1rem;right:1rem}.poster .eq{height:4.6rem;top:1rem;right:1rem}
   .greet{font-size:2.1rem}
 }
+
+/* iteration 3: inner pages take their app's accent */
+body.tinted{background-image:radial-gradient(60rem 28rem at 12% -6%,color-mix(in srgb,var(--ac) 20%,transparent),transparent 70%),radial-gradient(40rem 24rem at 100% 0,color-mix(in srgb,var(--ac) 9%,transparent),transparent 70%);background-repeat:no-repeat;background-attachment:fixed}
+body.tinted .appbar .badge{background:linear-gradient(145deg,var(--ac),color-mix(in srgb,var(--ac) 55%,#000));color:#10131c}
+body.tinted .btn.primary{background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 70%,#fff),var(--ac));color:#10131c}
+body.tinted .f:focus-visible,body.tinted .f:focus{outline-color:var(--ac)}
+.hero{display:flex;align-items:center;gap:1rem;margin:.2rem 0 1.4rem}
+.hero .ico{width:3.6rem;height:3.6rem;flex:none;border-radius:1.1rem;display:grid;place-items:center;color:#10131c;background:linear-gradient(145deg,color-mix(in srgb,var(--ac) 75%,#fff),var(--ac));box-shadow:0 .6rem 2rem color-mix(in srgb,var(--ac) 35%,transparent)}
+.hero .ico svg{width:1.9rem;height:1.9rem}
+.hero h1{margin:0;font-size:1.9rem;letter-spacing:-.02em}
+.hero p{margin:.15rem 0 0;color:var(--ink2)}

@@ -39,6 +39,9 @@
     var h=$("#appbar");if(!h)return;
     var home=h.getAttribute("data-home")==="1",title=h.getAttribute("data-title")||"",icon=h.getAttribute("data-icon")||"grid",sub=h.getAttribute("data-sub")||"";
     h.className="appbar";
+    var seg=location.pathname.replace(/\/index\.html$/,"").replace(/\/$/,"").split("/").pop(),app=APPS.filter(function(a){return a.id===seg})[0];
+    if(app){document.documentElement.style.setProperty("--ac",app.ac);document.body.classList.add("tinted");
+      var pg=$(".page");if(pg&&!$(".hero",pg)){var hd=el("div",{class:"hero rise"},'<div class="ico">'+ICON(app.icon)+'</div><div><h1>'+esc(app.name)+'</h1><p>'+esc(app.desc)+'</p></div>');pg.insertBefore(hd,pg.firstChild)}}
     h.innerHTML=(home?"":'<a class="back f" href="'+root+'index.html" aria-label="Back to home">'+ICON("back")+'</a>')+
       '<div class="ttl"><span class="badge">'+ICON(icon)+'</span><span>'+esc(title)+'</span></div><div class="sub" id="barsub">'+esc(sub)+'</div>';
   }
