@@ -1,20 +1,32 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Kapang</title>
-<link rel="stylesheet" href="shared/common.css"></head><body>
-<div class="top"><h1>Kapang</h1><span class="dim">Free TV launcher</span></div>
-<div class="wrap">
-  <h2>Open Kapang live TV</h2>
-  <p class="dim">This opens the Kapang website full screen on your TV. The site and its channels are run by Kapang, not by this app, so what you can watch depends on them. Some pages ask you to turn off an ad blocker.</p>
-  <p style="margin-top:30px"><span class="btn f" id="go">Open Kapang</span> <span class="btn f" id="ch">Open channel list</span> <span class="btn f" id="auto">Auto open: <b id="av">off</b></span></p>
-  <p class="dim" style="margin-top:30px">Tip: once the site is open, use the remote like a pointer, and press Back to return here or leave the app.</p>
-</div>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kapang · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>.wrap{max-width:46rem;margin:2rem auto 0}.row2{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.2rem}.note{margin-top:1.6rem}</style></head><body>
+<header id="appbar" data-title="Kapang" data-icon="tv" data-sub="Free TV launcher"></header>
+<main class="page"><div class="wrap">
+  <h1>Kapang live TV</h1>
+  <p style="margin:.6rem 0 0;font-size:1.05rem">Opens the Kapang site full screen. Channels and what they show are run by Kapang, not by this page.</p>
+  <div class="row2">
+    <a class="btn primary f" id="go" href="#">Open your channel</a>
+    <a class="btn f" id="all" href="https://kapang.com/live">All live channels</a>
+    <button class="btn f" id="auto" type="button"></button>
+  </div>
+  <div class="panel note">
+    <h3>Good to know</h3>
+    <p class="small" style="margin-top:.4rem">Kapang may ask you to turn off an ad blocker. Once it is open, use your remote like a pointer. Press Back to return here.</p>
+    <p class="small dim" style="margin-top:.5rem">To start on a different channel, change the Kapang link on the Settings page.</p>
+  </div>
+</div></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// Edit kapangUrl in config.js if you want a different start page (for example a favourite channel).
-var base="https://kapang.com/",url=(A.cfg.kapangUrl||"https://kapang.com/live?channel_id=799");
-function open(u){location.href=u}
-A.$("#go").onclick=function(){open(url)};
-A.$("#ch").onclick=function(){open(base+"live")};
-var auto=A.store("kapangAuto")===true;A.$("#av").textContent=auto?"on":"off";
-A.$("#auto").onclick=function(){auto=!auto;A.store("kapangAuto",auto);A.$("#av").textContent=auto?"on":"off"};
-if(auto&&!document.referrer)setTimeout(function(){open(url)},2500);
+var url=A.cfg.kapangUrl||"https://kapang.com/live";
+A.$("#go").href=url;
+var auto=A.store("kapangAuto")===true;
+function paint(){A.$("#auto").textContent="Open automatically: "+(auto?"On":"Off")}
+A.$("#auto").onclick=function(){auto=!auto;A.store("kapangAuto",auto);paint()};paint();
+// Auto open only when you arrived here directly, so Back from Kapang never loops.
+if(auto&&!sessionStorage.getItem("kapangShown")){sessionStorage.setItem("kapangShown","1");A.toast("Opening Kapang...",1800);setTimeout(function(){location.href=url},1800)}
+A.dock([{label:"Open channel",icon:"play",key:"green",primary:true,fn:function(){location.href=url}},{label:"Home",icon:"home",key:"red",fn:A.goHome}]);
 </script></body></html>

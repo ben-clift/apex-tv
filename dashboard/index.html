@@ -1,37 +1,25 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Apex Dashboard</title>
-<link rel="stylesheet" href="shared/common.css"></head><body>
-<div class="top"><h1>Apex Dashboard</h1><div><span id="mode" class="dim"></span> <span class="btn f" id="toggle">Switch view</span> <span class="btn f" id="reload">Reload</span></div></div>
-<div id="stage" style="height:900px"></div>
-<script>window.HINTS='<span class="c-r">RED reload</span><span class="c-g">GREEN switch view</span>'</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Creator Dashboard · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>.frame{width:100%;height:calc(100vh - 11rem);border:0;border-radius:var(--r);background:#fff}
+.bar{display:flex;align-items:center;gap:1rem;margin:.6rem 0}.bar .l{flex:1;min-width:0}.bar b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bar span{font-size:.8rem;color:var(--ink3)}</style></head><body>
+<header id="appbar" data-title="Creator Dashboard" data-icon="chart" data-sub=""></header>
+<main class="page"><div id="stage"></div></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// Two views. "Live" embeds your Streamlit Creator Finder. "Funnel" is a simple wall display from a
-// stats JSON (dashboard-stats.json next to this file, or any URL you put in statsUrl in config.js).
-var live=true, stage=A.$("#stage");
-function showLive(){
-  var u=A.cfg.dashboardUrl;
-  if(!u||u.indexOf("YOUR-APP")>-1){stage.innerHTML='<div class="wrap"><h2>Set dashboardUrl in shared/config.js</h2><p class="dim">Then run build.py again. Showing the funnel view instead.</p></div>';return showFunnel()}
-  stage.innerHTML="";var f=A.el("iframe",{src:u,style:"width:100%;height:100%;border:0;background:#fff"});stage.appendChild(f);
-  A.$("#mode").textContent="Live view";
-}
-function showFunnel(){
-  var url=A.cfg.statsUrl||"dashboard-stats.json";
-  A.getJSON(url).then(function(d){
-    var st=d.stages||[],max=Math.max.apply(null,st.map(function(s){return s.n}).concat([1]));
-    stage.innerHTML='<div class="wrap"><h2>Pipeline funnel</h2></div>';
-    var box=A.el("div",{class:"wrap"});
-    st.forEach(function(s){var row=A.el("div",{style:"display:flex;align-items:center;gap:24px;margin:10px 0"});
-      row.appendChild(A.el("div",{style:"width:300px",text:s.name}));
-      row.appendChild(A.el("div",{style:"height:44px;border-radius:8px;background:var(--gold);width:"+Math.max(8,Math.round(1100*s.n/max))+"px"}));
-      row.appendChild(A.el("div",{text:String(s.n)}));box.appendChild(row)});
-    stage.appendChild(box);
-    stage.appendChild(A.el("div",{class:"wrap dim",text:(d.note||"")+(d.updated?"  Updated "+d.updated:"")}));
-    A.$("#mode").textContent="Funnel view";
-  }).catch(function(e){stage.innerHTML='<div class="wrap"><h2>Could not load stats</h2><p class="dim">'+e.message+'</p></div>'});
-}
-function render(){live?showLive():showFunnel()}
-A.$("#toggle").onclick=function(){live=!live;render()};
-A.$("#reload").onclick=render;
-A.on("red",render);A.on("green",function(){live=!live;render()});
-render();setInterval(function(){if(!live)showFunnel()},120000);
+var live=true,st=A.$("#stage"),url=A.cfg.dashboardUrl;
+function setup(){A.state(st,"empty","Add your Creator Finder link","Paste your Streamlit app address on the Settings page. Until then you can use the funnel view.",'<a class="btn primary f" href="../settings/">Open Settings</a><button class="btn f" id="fn" type="button">Show funnel view</button>');A.$("#fn").onclick=function(){live=false;funnel()}}
+function showLive(){if(!url)return setup();
+  st.innerHTML='<div class="bar"><div class="l"><b>'+A.esc(url.replace(/^https?:\/\//,""))+'</b><span id="ls">Loading your app...</span></div></div><iframe class="frame" src="'+A.esc(url)+'" title="Creator Finder" referrerpolicy="no-referrer"></iframe>';
+  A.$(".frame").onload=function(){A.$("#ls").textContent="Live"};
+  setTimeout(function(){var l=A.$("#ls");if(l&&l.textContent!=="Live")l.textContent="Taking a while. If this stays blank, your app may block embedding. Use Open in new tab."},9000)}
+function funnel(){A.state(st,"load");A.getJSON("dashboard-stats.json").then(function(d){var s=d.stages||[],max=Math.max.apply(null,s.map(function(x){return x.n}).concat([1]));
+  var h='<div class="panel"><h2>Pipeline funnel</h2><p class="small" style="margin:.2rem 0 1rem">'+A.esc(d.note||"")+'</p>';
+  s.forEach(function(x){h+='<div style="display:flex;align-items:center;gap:1rem;margin:.5rem 0"><div style="width:7rem" class="small">'+A.esc(x.name)+'</div><div style="height:1.6rem;border-radius:.5rem;background:linear-gradient(90deg,var(--gold2),var(--gold));width:'+Math.max(2,Math.round(70*x.n/max))+'%"></div><b>'+x.n+'</b></div>'});
+  st.innerHTML=h+'</div>'}).catch(function(e){A.state(st,"err","Could not load the stats file",e.message)})}
+function toggle(){live=!live;live?showLive():funnel()}
+A.dock([{label:live?"Funnel view":"Live view",icon:"chart",key:"green",fn:toggle},{label:"Reload",icon:"refresh",key:"red",fn:function(){live?showLive():funnel()}}].concat(url?[{label:"Open in new tab",icon:"link",key:"yellow",fn:function(){window.open(url,"_blank")}}]:[]));
+showLive();
 </script></body></html>

@@ -1,20 +1,22 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Ad Preview</title>
-<link rel="stylesheet" href="shared/common.css"><style>video{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#000;max-width:100%;max-height:100%}#hud{position:fixed;top:20px;left:30px;z-index:2;text-shadow:0 0 8px #000}</style></head><body>
-<div id="hud"></div><video id="v" controls></video>
-<script>window.HINTS='◀ ▶ previous / next ad<span class="c-g">GREEN safe-area guide</span><span class="c-r">RED loop</span>'</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ad Preview · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>.stage{position:relative;display:grid;place-items:center;height:calc(100vh - 12rem);background:#000;border-radius:var(--r);overflow:hidden}
+video{max-width:100%;max-height:100%}.safe{position:absolute;border:3px dashed var(--green);pointer-events:none;border-radius:.4rem}</style></head><body>
+<header id="appbar" data-title="Ad Preview" data-icon="film" data-sub=""></header>
+<main class="page"><div id="msg"></div><div class="stage" id="stage"><video id="v" controls playsinline></video></div></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// Plays finished Hookreel ads (mp4 links from the Hookreel Earlier ads list, or any mp4) on a big screen.
-// The guide box shows where phone apps cover the edges, so you can check hooks and captions are not hidden.
-var urls=A.store("ads")||A.cfg.adUrls||[],i=0,guide=false,v=A.$("#v");
-function load(n){if(!urls.length){A.$("#hud").textContent="No ads yet. Add mp4 links to adUrls in config.js, or press OK to add one by keyboard.";return}
-  i=(n+urls.length)%urls.length;v.src=urls[i];v.play&&v.play();A.$("#hud").textContent="Ad "+(i+1)+" of "+urls.length}
+// Plays finished Hookreel ads (mp4 links). The green guide marks the area phone apps usually leave free of buttons and captions.
+var urls=(A.cfg.adUrls||[]).slice(),i=0,v=A.$("#v"),guide=false;
+function load(n){if(!urls.length)return;i=(n+urls.length)%urls.length;v.src=urls[i];v.play&&v.play().catch(function(){});A.$("#barsub").textContent="Ad "+(i+1)+" of "+urls.length}
+function drawGuide(){var g=A.$(".safe");if(g)g.remove();if(!guide)return;var r=v.getBoundingClientRect(),s=A.$("#stage").getBoundingClientRect();
+  A.$("#stage").appendChild(A.el("div",{class:"safe",style:"left:"+(r.left-s.left+r.width*.06)+"px;top:"+(r.top-s.top+r.height*.1)+"px;width:"+r.width*.88+"px;height:"+r.height*.72+"px"}))}
+if(!urls.length){A.$("#stage").style.display="none";A.state("#msg","empty","No ads yet","Add mp4 links (from Hookreel's Earlier ads) on the Settings page, one per line.",'<a class="btn primary f" href="../settings/">Open Settings</a>')}
+v.onerror=function(){A.toast("Could not play that file. Is it an https mp4?",4000)};v.onloadedmetadata=drawGuide;
 A.on("right",function(){load(i+1)});A.on("left",function(){load(i-1)});
-A.on("red",function(){v.loop=!v.loop;A.toast(v.loop?"Loop on":"Loop off")});
-A.on("green",function(){guide=!guide;var g=A.$("#g");if(g)g.remove();if(guide){var r=v.getBoundingClientRect();
-  var d=A.el("div",{id:"g",style:"position:fixed;border:3px dashed #3fb950;pointer-events:none;z-index:3;left:"+(r.left+r.width*.06)+"px;width:"+r.width*.88+"px;top:"+(r.top+r.height*.1)+"px;height:"+r.height*.72+"px"});document.body.appendChild(d)}});
-A.on("enter",function(){if(!urls.length){var u=prompt("Paste an mp4 link");if(u){urls.push(u);A.store("ads",urls);load(0)}}else{v.paused?v.play():v.pause()}});
-A.on("play",function(){v.paused?v.play():v.pause()});
-v.onerror=function(){A.toast("Could not play that file. Is it an https mp4?",4000)};
+A.dock([{label:"Previous",icon:"back",fn:function(){load(i-1)}},{label:"Next",icon:"next",key:"green",fn:function(){load(i+1)}},{label:"Safe area",icon:"check",key:"yellow",fn:function(){guide=!guide;drawGuide()}},{label:"Loop",icon:"refresh",key:"red",fn:function(){v.loop=!v.loop;A.toast(v.loop?"Loop on":"Loop off")}}]);
 load(0);
 </script></body></html>

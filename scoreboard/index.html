@@ -1,18 +1,22 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Scoreboard</title>
-<link rel="stylesheet" href="shared/common.css"><style>.n{font-size:9em;text-align:center;line-height:1}.t{text-align:center;font-size:1.4em;color:var(--dim)}</style></head><body>
-<div class="top"><h1>Scoreboard</h1><span id="clock" style="font-size:2.4em">00:00</span></div>
-<div class="wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px">
-<div class="panel"><div class="t">HOME</div><div class="n" id="h">0</div></div><div class="panel"><div class="t">AWAY</div><div class="n" id="a">0</div></div></div>
-<script>window.HINTS='<span class="c-r">RED home +1</span><span class="c-b">BLUE away +1</span><span class="c-g">GREEN start/stop clock</span><span class="c-y">YELLOW undo / hold reset</span>◀ home − ▶ away −'</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Scoreboard · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>.clk{text-align:center;font-size:clamp(2.4rem,7vw,6rem);font-weight:300;margin:.4rem 0 1rem}.sides{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.side{text-align:center;padding:1.2rem .6rem;cursor:pointer}
+.side .l{color:var(--ink3);font-weight:700;letter-spacing:.1em}.side .n{font-size:clamp(5rem,20vw,16rem);font-weight:850;line-height:1}.side.h .n{color:var(--gold2)}.side.a .n{color:var(--teal)}
+.mini{display:flex;gap:.5rem;justify-content:center;margin-top:.8rem}</style></head><body>
+<header id="appbar" data-title="Scoreboard" data-icon="score" data-sub=""></header>
+<main class="page"><div class="clk tnum" id="clock">00:00</div>
+<div class="sides"><div class="panel side h"><div class="l">HOME</div><div class="n tnum" id="h">0</div><div class="mini"><button class="btn f" id="h1" type="button">+1</button><button class="btn f" id="hm" type="button">-1</button></div></div>
+<div class="panel side a"><div class="l">AWAY</div><div class="n tnum" id="a">0</div><div class="mini"><button class="btn f" id="a1" type="button">+1</button><button class="btn f" id="am" type="button">-1</button></div></div></div></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-var s={h:0,a:0,t:0},run=false,hist=[],last=Date.now();
+var s=A.store("sb")||{h:0,a:0,t:0},run=false,hist=[];
 function draw(){A.$("#h").textContent=s.h;A.$("#a").textContent=s.a;A.$("#clock").textContent=A.pad(Math.floor(s.t/60))+":"+A.pad(s.t%60);A.store("sb",s)}
 function add(k,d){hist.push([k,d]);s[k]=Math.max(0,s[k]+d);draw()}
-A.on("red",function(){add("h",1)});A.on("blue",function(){add("a",1)});A.on("left",function(){add("h",-1)});A.on("right",function(){add("a",-1)});
-A.on("green",function(){run=!run;A.toast(run?"Clock running":"Clock stopped")});
-A.on("yellow",function(){var u=hist.pop();if(u){s[u[0]]=Math.max(0,s[u[0]]-u[1]);draw()}});
-A.on("down",function(){s={h:0,a:0,t:0};hist=[];draw();A.toast("Reset")});
-setInterval(function(){if(run){s.t++;draw()}},1000);
-var sv=A.store("sb");if(sv){s=sv}draw();
+A.$("#h1").onclick=function(){add("h",1)};A.$("#hm").onclick=function(){add("h",-1)};A.$("#a1").onclick=function(){add("a",1)};A.$("#am").onclick=function(){add("a",-1)};
+A.dock([{label:"Home +1",key:"red",fn:function(){add("h",1)}},{label:"Away +1",key:"blue",fn:function(){add("a",1)}},{label:"Clock",icon:"timer",key:"green",primary:true,fn:function(){run=!run;A.toast(run?"Clock running":"Clock stopped")}},
+  {label:"Undo",icon:"back",key:"yellow",fn:function(){var u=hist.pop();if(u){s[u[0]]=Math.max(0,s[u[0]]-u[1]);draw()}}},{label:"Reset",icon:"refresh",fn:function(){s={h:0,a:0,t:0};hist=[];run=false;draw()}}]);
+setInterval(function(){if(run){s.t++;draw()}},1000);draw();A.keepAwake();
 </script></body></html>

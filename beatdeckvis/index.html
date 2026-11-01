@@ -1,108 +1,135 @@
-<!doctype html><html><head><meta charset="utf-8"><title>BeatDeck Visuals</title>
-<link rel="stylesheet" href="shared/common.css">
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BeatDeck Visuals · Apex TV</title><meta name="theme-color" content="#000000"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
 <style>
-canvas{position:fixed;inset:0;width:100%;height:100%;background:#000}
-#name{position:fixed;left:40px;bottom:70px;font-size:.8em;color:#fff;text-shadow:0 0 8px #000;opacity:0;transition:opacity .6s;z-index:3}
-#menu{position:fixed;right:0;top:0;bottom:0;width:640px;background:#0b0c10ee;border-left:3px solid var(--gold);padding:36px;z-index:5;display:none;overflow:auto}
-.row{display:flex;justify-content:space-between;padding:16px 20px;margin:6px 0;background:var(--panel)}
-#msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;z-index:9;background:#000;padding:80px}
+html,body{background:#000;height:100%;overflow:hidden;padding:0}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;background:#000}
+.ui{transition:opacity .35s}.ui.off{opacity:0;pointer-events:none}
+#top{position:fixed;left:0;right:0;top:0;z-index:20;display:flex;align-items:center;gap:.7rem;padding:.8rem var(--pad);background:linear-gradient(#000c,transparent)}
+#top .back{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:50%;background:#ffffff22}
+#name{font-weight:700;text-shadow:0 1px 8px #000;margin-left:auto;text-align:right;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#start{position:fixed;inset:0;z-index:40;display:grid;place-items:center;text-align:center;background:radial-gradient(900px 600px at 50% 40%,#2a2110,#000);padding:2rem}
+#start h1{margin-bottom:.4rem}#start p{margin-bottom:1.4rem}
+#sheet{position:fixed;z-index:35;right:0;top:0;bottom:0;width:min(100%,26rem);background:#0b0d14f2;border-left:1px solid var(--line);padding:1rem 1rem 6rem;overflow:auto;transform:translateX(105%);transition:transform .3s var(--ease)}
+#sheet.open{transform:none}
+.row{display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;margin:.35rem 0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm)}
+.row .n{flex:1;font-size:.9rem}.row .v{min-width:3.6rem;text-align:center;font-weight:750;color:var(--gold2)}
+.row .b{display:grid;place-items:center;width:2.2rem;height:2.2rem;border-radius:50%;background:var(--surface2);cursor:pointer;border:0;color:var(--ink)}
+.row.sel{border-color:var(--gold)}
+#msg{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:1.5rem;background:#000}
 </style></head><body>
-<canvas id="c"></canvas><div id="name"></div>
+<canvas id="c"></canvas>
+<div id="top" class="ui"><a class="back f" href="../index.html" aria-label="Back to home">&#8249;</a><b>BeatDeck Visuals</b><span id="name"></span></div>
+<div id="sheet"><h2 style="margin:.4rem 0 .6rem">Settings</h2><div id="rows"></div><p class="small dim" style="margin-top:.8rem">Up and down choose, left and right change. Changes are remembered on this device.</p></div>
 <div id="msg"></div>
-<div id="menu"><h2>BeatDeck Visuals</h2><div id="rows"></div><p class="dim" style="font-size:.7em">OK or MENU (Yellow) closes. Left and right change a value.</p></div>
-<script>window.HINTS='<span class="c-y">YELLOW settings</span><span class="c-r">RED next preset</span><span class="c-g">GREEN random</span>◀ ▶ previous / next preset<span>Tap tempo: OK</span>'</script>
-<script>window.EXTRA=[{t:"Prev",c:"#ddd",fn:function(){A.call("left")}},{t:"Next",c:"#ddd",fn:function(){A.call("right")}},{t:"Tap tempo",c:"#ddd",fn:function(){A.call("enter")}},{t:"BPM +",c:"#ddd",fn:function(){A.call("up")}},{t:"BPM -",c:"#ddd",fn:function(){A.call("down")}}]</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<div id="start"><div><h1>BeatDeck Visuals</h1><p>MilkDrop visuals that pulse at your tempo.</p><button class="btn primary f" id="go" type="button">Start visuals</button><p class="small dim" style="margin-top:1.1rem">Tip: tap the screen to show controls. Tap tempo in time with the music.</p></div></div>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script src="lib/butterchurn.min.js"></script><script src="lib/butterchurnPresets.min.js"></script>
 <script>
-// MilkDrop visuals (the open source butterchurn engine, MIT) on the TV.
-// A TV cannot hear your phone, so the beat comes from a silent synthetic kick and hat pattern at your BPM.
-// BeatDeck on the phone can steer this screen by publishing a small JSON (stateUrl in config.js):
-//   {"bpm":126,"preset":"name or number","calm":true,"cycle":30,"brightness":80,"beatAt":1730480000123}
-// beatAt (ms since 1970) lines the TV beat up with the phone beat. Everything works without it, using the remote.
-var C=A.cfg, S=Object.assign({bpm:124,preset:0,cycle:30,calm:true,brightness:85,showName:true,blend:2.7,sensitivity:1.0,seed:0},A.store("bv")||{});
+// MilkDrop (butterchurn, MIT). A TV cannot hear your phone, so the beat is a silent kick and clap pattern at your BPM.
+// If your phone publishes a small JSON (beatdeckStateUrl on the Settings page) this screen follows its tempo and settings.
+var C=A.cfg,S=Object.assign({bpm:124,preset:0,cycle:30,calm:true,brightness:90,showName:true,blend:2.7,strength:1,lite:false},A.store("bv")||{});
 function save(){A.store("bv",S)}
 var BC=window.butterchurn&&(window.butterchurn.default||window.butterchurn),BP=window.butterchurnPresets&&(window.butterchurnPresets.default||window.butterchurnPresets);
-var cv=A.$("#c"),viz,actx,gainNode,src,lastBpm=0,presets={},keys=[];
+var cv=A.$("#c"),viz=null,actx,gain,src,presets={},keys=[],started=false,lite=false;
 
-function fail(m){var e=A.$("#msg");e.style.display="flex";e.innerHTML="<div><h2>Visuals not available</h2><p class='dim'>"+m+"</p></div>"}
-if(!BC||!BP){fail("The MilkDrop library did not load.")}
-else{try{
-  var P=BP.getPresets?BP.getPresets():BP;
-  presets=P;keys=Object.keys(P).sort();
-}catch(e){if(e)fail(e.message||e)}}
+function size(){var d=Math.min(window.devicePixelRatio||1,1.5);cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);if(viz)viz.setRendererSize(cv.width,cv.height)}
+function showMsg(title,text,html){var m=A.$("#msg");m.style.display="flex";m.innerHTML='<div style="max-width:30rem">'+'</div>';A.state(m.firstChild,"err",title,text,html)}
 
-function size(){cv.width=Math.min(innerWidth,1920);cv.height=Math.min(innerHeight,1080);if(viz)viz.setRendererSize(cv.width,cv.height)}
-
-// ---------- silent beat source ----------
-function makeLoop(bpm){
-  var sr=actx.sampleRate,beat=Math.round(sr*60/bpm),bars=4,len=beat*4*bars,buf=actx.createBuffer(1,len,sr),d=buf.getChannelData(0);
+// ---------- silent beat ----------
+function makeLoop(bpm){var sr=actx.sampleRate,beat=Math.round(sr*60/bpm),bars=4,len=beat*4*bars,buf=actx.createBuffer(1,len,sr),d=buf.getChannelData(0);
   function kick(at){var n=Math.min(Math.round(sr*.25),len-at);for(var i=0;i<n;i++){var t=i/sr;d[at+i]+=Math.sin(2*Math.PI*(150*Math.exp(-t*30)+45)*t)*Math.exp(-t*12)*.9}}
-  function hat(at){var n=Math.min(Math.round(sr*.05),len-at);for(var i=0;i<n;i++){d[at+i]+=(Math.random()*2-1)*Math.exp(-i/sr*90)*.25}}
-  function clap(at){var n=Math.min(Math.round(sr*.12),len-at);for(var i=0;i<n;i++){d[at+i]+=(Math.random()*2-1)*Math.exp(-i/sr*30)*.35}}
-  for(var b=0;b<4*bars;b++){kick(b*beat);if(b%4===1||b%4===3)clap(b*beat);hat(b*beat+Math.round(beat/2))}
-  return buf}
+  function hat(at){var n=Math.min(Math.round(sr*.05),len-at);for(var i=0;i<n;i++)d[at+i]+=(Math.random()*2-1)*Math.exp(-i/sr*90)*.25}
+  function clap(at){var n=Math.min(Math.round(sr*.12),len-at);for(var i=0;i<n;i++)d[at+i]+=(Math.random()*2-1)*Math.exp(-i/sr*30)*.35}
+  for(var b=0;b<4*bars;b++){kick(b*beat);if(b%4===1||b%4===3)clap(b*beat);hat(b*beat+Math.round(beat/2))}return buf}
 function startBeat(){
+  if(!actx||!viz)return;
   if(src){try{src.stop()}catch(e){}}
-  if(viz&&gainNode){try{viz.disconnectAudio(gainNode)}catch(e){}}
+  if(gain){try{viz.disconnectAudio(gain)}catch(e){}}
   src=actx.createBufferSource();src.buffer=makeLoop(S.bpm);src.loop=true;
-  gainNode=actx.createGain();gainNode.gain.value=S.sensitivity;src.connect(gainNode);   // never connected to the speakers
-  if(viz)viz.connectAudio(gainNode);
-  var off=0;if(S.beatAt){var spb=60000/S.bpm;off=(((Date.now()-S.beatAt)%(spb*16))+spb*16)%(spb*16)/1000}
-  src.start(0,off);lastBpm=S.bpm}
+  gain=actx.createGain();gain.gain.value=S.strength;src.connect(gain);viz.connectAudio(gain);     // never sent to the speakers
+  var off=0;if(S.beatAt){var span=60000/S.bpm*16;off=(((Date.now()-S.beatAt)%span)+span)%span/1000}
+  src.start(0,off)}
 
-// ---------- visuals ----------
-function setPreset(i,blend){
-  if(!keys.length)return;S.preset=((i%keys.length)+keys.length)%keys.length;
+// ---------- presets ----------
+function setPreset(i,blend){if(!keys.length||!viz)return;S.preset=((i%keys.length)+keys.length)%keys.length;
   viz.loadPreset(presets[keys[S.preset]],blend===undefined?(S.calm?S.blend+2:S.blend):blend);save();
-  var n=A.$("#name");n.textContent=keys[S.preset].replace(/\s+/g," ");n.style.opacity=S.showName?1:0;setTimeout(function(){n.style.opacity=0},4000)}
-function applyLook(){cv.style.filter="brightness("+(S.brightness/100)+")"}
-function frame(){if(viz)viz.render();requestAnimationFrame(frame)}
-var cycleTimer;function cycle(){clearInterval(cycleTimer);if(S.cycle>0)cycleTimer=setInterval(function(){if(S.cycle>0)setPreset(Math.floor(Math.random()*keys.length))},S.cycle*1000)}
+  var n=A.$("#name");n.textContent=keys[S.preset].replace(/\s+/g," ");n.style.opacity=S.showName?1:0}
+function look(){cv.style.filter="brightness("+(S.brightness/100)+")"}
+var cyc;function cycle(){clearInterval(cyc);if(S.cycle>0&&!lite)cyc=setInterval(function(){setPreset(Math.floor(Math.random()*keys.length))},S.cycle*1000)}
 
-if(keys.length){try{
+// ---------- lite fallback (no WebGL 2): soft rings that pulse at the BPM ----------
+function liteLoop(){var g=cv.getContext("2d"),t0=performance.now();
+  (function f(now){var W=cv.width,H=cv.height,spb=60000/S.bpm,p=((now-t0)%spb)/spb,pulse=Math.pow(1-p,3),amp=S.calm?.35:1,t=now/1000;
+    g.fillStyle="rgba(4,5,10,.22)";g.fillRect(0,0,W,H);
+    for(var i=0;i<12;i++){var r=((i/12+t*.1)%1),rad=r*Math.max(W,H)*.7*(1+pulse*.08*amp);g.strokeStyle="hsla("+((i*28+t*30)%360)+",80%,"+(30+r*30)+"%,"+(1-r)+")";g.lineWidth=2+r*12;g.beginPath();g.arc(W/2,H/2,rad,0,6.283);g.stroke()}
+    requestAnimationFrame(f)})(t0)}
+
+function boot(){
   size();addEventListener("resize",size);
-  actx=new (window.AudioContext||window.webkitAudioContext)();
-  viz=BC.createVisualizer(actx,cv,{width:cv.width,height:cv.height,pixelRatio:1,textureRatio:1});
-  startBeat();setPreset(S.preset,0);applyLook();cycle();frame();
-}catch(e){fail("Could not start MilkDrop: "+(e.message||e))}}
+  try{
+    if(!BC||!BP)throw new Error("The visuals library did not load.");
+    var P=BP.getPresets?BP.getPresets():BP;presets=P;keys=Object.keys(P).sort();
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    viz=BC.createVisualizer(actx,cv,{width:cv.width,height:cv.height,pixelRatio:1,textureRatio:1});
+    startBeat();setPreset(S.preset,0);look();cycle();
+    (function f(){viz.render();requestAnimationFrame(f)})();
+  }catch(e){
+    lite=true;A.toast("Using simple visuals (this screen does not support MilkDrop)",4500);liteLoop();look();
+  }
+  buildRows();dock();wake();pull();setInterval(pull,3000)}
 
-// ---------- settings menu ----------
-var menu=A.$("#menu"),rows=A.$("#rows"),sel=0,open=false;
-var items=[
- {n:"Preset",get:function(){return (S.preset+1)+"/"+keys.length},ch:function(d){setPreset(S.preset+d)}},
- {n:"Auto change (seconds, 0 off)",get:function(){return S.cycle},ch:function(d){var o=[0,10,20,30,60,120];S.cycle=o[(o.indexOf(S.cycle)+d+o.length)%o.length];cycle();save()}},
- {n:"BPM",get:function(){return S.bpm},ch:function(d){S.bpm=Math.max(60,Math.min(200,S.bpm+d));startBeat();save()}},
- {n:"Calm mode (slow blends)",get:function(){return S.calm?"On":"Off"},ch:function(){S.calm=!S.calm;save()}},
- {n:"Brightness",get:function(){return S.brightness+"%"},ch:function(d){S.brightness=Math.max(20,Math.min(100,S.brightness+d*5));applyLook();save()}},
- {n:"Beat strength",get:function(){return S.sensitivity.toFixed(1)},ch:function(d){S.sensitivity=Math.max(.2,Math.min(2,Math.round((S.sensitivity+d*.2)*10)/10));startBeat();save()}},
- {n:"Show preset name",get:function(){return S.showName?"On":"Off"},ch:function(){S.showName=!S.showName;save()}}
-];
-function drawMenu(){rows.innerHTML="";items.forEach(function(it,k){var r=A.el("div",{class:"row"+(k===sel?" on":""),style:k===sel?"border:4px solid var(--gold);border-radius:12px":""});
-  r.appendChild(A.el("span",{text:it.n}));r.appendChild(A.el("b",{class:"c-y",text:String(it.get())}));rows.appendChild(r)})}
-function toggleMenu(){open=!open;menu.style.display=open?"block":"none";if(open)drawMenu()}
-A.on("yellow",toggleMenu);
-A.on("red",function(){setPreset(S.preset+1)});A.on("green",function(){setPreset(Math.floor(Math.random()*keys.length))});
-A.on("up",function(){if(open){sel=(sel+items.length-1)%items.length;drawMenu()}else{S.bpm=Math.min(200,S.bpm+1);startBeat();save()}});
-A.on("down",function(){if(open){sel=(sel+1)%items.length;drawMenu()}else{S.bpm=Math.max(60,S.bpm-1);startBeat();save()}});
-A.on("left",function(){if(open){items[sel].ch(-1);drawMenu()}else setPreset(S.preset-1)});
-A.on("right",function(){if(open){items[sel].ch(1);drawMenu()}else setPreset(S.preset+1)});
-var taps=[];
-A.on("enter",function(){if(open){toggleMenu();return}var n=Date.now();if(taps.length&&n-taps[taps.length-1]>2000)taps=[];taps.push(n);
-  if(taps.length>2){var s=0;for(var i=1;i<taps.length;i++)s+=taps[i]-taps[i-1];S.bpm=Math.max(60,Math.min(200,Math.round(60000/(s/(taps.length-1)))));S.beatAt=n;startBeat();save();A.toast(S.bpm+" BPM")}});
-A.on("back",function(){if(open){toggleMenu();return}return false});
+// ---------- settings sheet ----------
+var sheet=A.$("#sheet"),rowsEl=A.$("#rows"),sel=0,items=[
+ {n:"Preset",get:function(){return keys.length?(S.preset+1)+" / "+keys.length:"-"},ch:function(d){setPreset(S.preset+d)}},
+ {n:"Auto change",get:function(){return S.cycle?S.cycle+"s":"Off"},ch:function(d){var o=[0,10,20,30,60,120];S.cycle=o[(o.indexOf(S.cycle)+d+o.length)%o.length];cycle();save()}},
+ {n:"Tempo (BPM)",get:function(){return S.bpm},ch:function(d){S.bpm=Math.max(60,Math.min(200,S.bpm+d));startBeat();save()}},
+ {n:"Calm mode",get:function(){return S.calm?"On":"Off"},ch:function(){S.calm=!S.calm;save()}},
+ {n:"Brightness",get:function(){return S.brightness+"%"},ch:function(d){S.brightness=Math.max(20,Math.min(100,S.brightness+d*5));look();save()}},
+ {n:"Beat strength",get:function(){return S.strength.toFixed(1)},ch:function(d){S.strength=Math.max(.2,Math.min(2,Math.round((S.strength+d*.2)*10)/10));startBeat();save()}},
+ {n:"Show preset name",get:function(){return S.showName?"On":"Off"},ch:function(){S.showName=!S.showName;A.$("#name").style.opacity=S.showName?1:0;save()}}];
+function buildRows(){rowsEl.innerHTML="";items.forEach(function(it,k){
+  var r=A.el("div",{class:"row"+(k===sel?" sel":"")});r.innerHTML='<span class="n">'+it.n+'</span><button class="b f" data-d="-1" aria-label="Less">'+ICON("minus")+'</button><span class="v">'+it.get()+'</span><button class="b f" data-d="1" aria-label="More">'+ICON("plus")+'</button>';
+  r.querySelectorAll("button").forEach(function(b){b.onclick=function(e){sel=k;it.ch(+b.getAttribute("data-d"));buildRows();e.stopPropagation()}});
+  r.onclick=function(){sel=k;buildRows()};rowsEl.appendChild(r)})}
+function toggleSheet(){sheet.classList.toggle("open");if(sheet.classList.contains("open"))buildRows();wakeUI()}
+function sheetOpen(){return sheet.classList.contains("open")}
+
+// ---------- dock and controls ----------
+function dock(){A.dock([
+  {label:"Settings",icon:"gear",key:"yellow",fn:toggleSheet},
+  {label:"Next",icon:"next",key:"red",fn:function(){setPreset(S.preset+1)}},
+  {label:"Random",icon:"shuffle",key:"green",fn:function(){setPreset(Math.floor(Math.random()*keys.length))}},
+  {label:"Full screen",icon:"full",key:"blue",fn:A.fullscreen},
+  {label:"Tap tempo",icon:"play",fn:tap}]);A.$("#dock").classList.add("ui")}
+var taps=[];function tap(){var n=Date.now();if(taps.length&&n-taps[taps.length-1]>2000)taps=[];taps.push(n);
+  if(taps.length>2){var s=0;for(var i=1;i<taps.length;i++)s+=taps[i]-taps[i-1];S.bpm=Math.max(60,Math.min(200,Math.round(60000/(s/(taps.length-1)))));S.beatAt=n;startBeat();save();buildRows();A.toast(S.bpm+" BPM",1200)}else A.toast("Keep tapping in time",1200)}
+A.on("up",function(){if(sheetOpen()){sel=(sel+items.length-1)%items.length;buildRows()}else{S.bpm=Math.min(200,S.bpm+1);startBeat();save();A.toast(S.bpm+" BPM",900)}});
+A.on("down",function(){if(sheetOpen()){sel=(sel+1)%items.length;buildRows()}else{S.bpm=Math.max(60,S.bpm-1);startBeat();save();A.toast(S.bpm+" BPM",900)}});
+A.on("left",function(){if(sheetOpen()){items[sel].ch(-1);buildRows()}else setPreset(S.preset-1)});
+A.on("right",function(){if(sheetOpen()){items[sel].ch(1);buildRows()}else setPreset(S.preset+1)});
+A.on("enter",function(){if(!started)return false;if(sheetOpen()){items[sel].ch(1);buildRows()}else tap()});
+A.on("back",function(){if(sheetOpen()){toggleSheet();return}return false});
+
+// controls fade away when idle, so the picture is clean on a big screen
+var uiTimer;function wakeUI(){A.$$(".ui").forEach(function(e){e.classList.remove("off")});clearTimeout(uiTimer);uiTimer=setTimeout(function(){if(!sheetOpen())A.$$(".ui").forEach(function(e){e.classList.add("off")})},5000)}
+["mousemove","touchstart","keydown","click"].forEach(function(ev){addEventListener(ev,function(){if(started)wakeUI()},{passive:true})});
+function wake(){A.keepAwake()}
 
 // ---------- optional steering from the phone ----------
-function pull(){var u=C.beatdeckStateUrl;if(!u)return;
-  A.getJSON(u+(u.indexOf("?")>-1?"&":"?")+"t="+Date.now(),null,5000).then(function(d){
-    var rebeat=false;
-    if(typeof d.bpm==="number"&&Math.abs(d.bpm-S.bpm)>=1){S.bpm=Math.round(d.bpm);rebeat=true}
-    if(typeof d.beatAt==="number"&&d.beatAt!==S.beatAt){S.beatAt=d.beatAt;rebeat=true}
-    if(typeof d.calm==="boolean")S.calm=d.calm;
-    if(typeof d.brightness==="number"){S.brightness=Math.max(20,Math.min(100,d.brightness));applyLook()}
+function pull(){var u=C.beatdeckStateUrl;if(!u||!viz)return;
+  A.getJSON(u+(u.indexOf("?")>-1?"&":"?")+"t="+Date.now(),null,5000).then(function(d){var re=false;
+    if(typeof d.bpm==="number"&&Math.abs(d.bpm-S.bpm)>=1){S.bpm=Math.round(d.bpm);re=true}
+    if(typeof d.beatAt==="number"&&d.beatAt!==S.beatAt){S.beatAt=d.beatAt;re=true}
+    if(typeof d.calm==="boolean")S.calm=d.calm;if(typeof d.brightness==="number"){S.brightness=Math.max(20,Math.min(100,d.brightness));look()}
     if(typeof d.cycle==="number"&&d.cycle!==S.cycle){S.cycle=d.cycle;cycle()}
-    if(d.preset!==undefined&&d.preset!==S.remotePreset){S.remotePreset=d.preset;
-      var k=typeof d.preset==="number"?d.preset:keys.findIndex(function(x){return x.toLowerCase().indexOf(String(d.preset).toLowerCase())>-1});if(k>-1)setPreset(k)}
-    if(rebeat&&viz)startBeat();save()}).catch(function(){})}
-setInterval(pull,3000);pull();
+    if(d.preset!==undefined&&d.preset!==S.remote){S.remote=d.preset;var k=typeof d.preset==="number"?d.preset:keys.findIndex(function(x){return x.toLowerCase().indexOf(String(d.preset).toLowerCase())>-1});if(k>-1)setPreset(k)}
+    if(re)startBeat();save()}).catch(function(){})}
+
+// ---------- start screen (browsers need one tap before audio can run) ----------
+A.$("#go").onclick=function(){started=true;A.$("#start").style.display="none";boot();
+  try{if(actx&&actx.resume)actx.resume()}catch(e){}wakeUI()};
+A.on("enter",function(){if(!started){A.$("#go").click();return true}if(sheetOpen()){items[sel].ch(1);buildRows()}else tap();return true});
 </script></body></html>

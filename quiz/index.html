@@ -1,19 +1,22 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Quiz Night</title>
-<link rel="stylesheet" href="shared/common.css"></head><body>
-<div class="top"><h1>Quiz Night</h1><span id="round" class="dim"></span></div>
-<div class="wrap"><div id="q" style="font-size:1.6em;min-height:220px"></div><div id="a" class="c-g" style="font-size:1.3em;min-height:60px"></div>
-<div id="teams" style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:30px"></div></div>
-<script>window.HINTS='◀ ▶ question<span class="c-y">YELLOW reveal answer</span>Teams: <b class="c-r">RED</b> <b class="c-g">GREEN</b> <b class="c-b">BLUE</b> +1 point (hold ▲▼ to adjust last)'</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quiz Night · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>.q{font-size:clamp(1.5rem,3.6vw,3.4rem);font-weight:800;line-height:1.15;letter-spacing:-.02em;min-height:7rem;margin:1rem 0}.ans{font-size:clamp(1.2rem,2.6vw,2.4rem);color:var(--green);font-weight:750;min-height:3.4rem}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.8rem;margin-top:1.2rem}.team{padding:.8rem;text-align:center;border-radius:var(--r);background:var(--surface);border:2px solid var(--line);cursor:pointer}.team b{font-size:2.4rem;display:block}.team.last{border-color:var(--gold)}</style></head><body>
+<header id="appbar" data-title="Quiz Night" data-icon="quiz" data-sub=""></header>
+<main class="page"><div class="chip" id="rd"></div><div class="q" id="q"></div><div class="ans" id="a"></div><div class="teams" id="teams"></div>
+<p class="small dim" style="margin-top:1rem">Tap a team to give it a point, or use the coloured buttons. Questions come from questions.json.</p></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// Questions come from questions.json. The sample ones are yours to replace. Press a colour to give that team a point.
-var qs=[],i=0,teams=[{n:"Red",s:0},{n:"Green",s:0},{n:"Blue",s:0},{n:"Yellow",s:0}],lastTeam=0;
-function draw(){var q=qs[i]||{q:"No questions loaded",a:""};A.$("#q").textContent=(i+1)+". "+q.q;A.$("#a").textContent="";A.$("#round").textContent="Question "+(i+1)+" of "+qs.length;
-  var t=A.$("#teams");t.innerHTML="";teams.forEach(function(x,k){t.appendChild(A.el("div",{class:"panel",style:"text-align:center"+(k===lastTeam?";border-color:var(--gold)":""),text:x.n+": "+x.s}))})}
-function pt(k,d){teams[k].s=Math.max(0,teams[k].s+d);lastTeam=k;draw();A.$("#a").textContent=""}
-A.on("right",function(){i=Math.min(qs.length-1,i+1);draw()});A.on("left",function(){i=Math.max(0,i-1);draw()});
-A.on("yellow",function(){A.$("#a").textContent="Answer: "+(qs[i]&&qs[i].a||"")});
-A.on("red",function(){pt(0,1)});A.on("green",function(){pt(1,1)});A.on("blue",function(){pt(2,1)});
-A.on("up",function(){pt(lastTeam,1)});A.on("down",function(){pt(lastTeam,-1)});A.on("enter",function(){pt(3,1)});
-A.getJSON("questions.json").then(function(d){qs=d.questions;draw()}).catch(function(e){A.$("#q").textContent=e.message});
+var qs=[],i=0,teams=[{n:"Red",c:"var(--red)",s:0},{n:"Green",c:"var(--green)",s:0},{n:"Blue",c:"var(--blue)",s:0},{n:"Gold",c:"var(--gold)",s:0}],last=0;
+function draw(){var q=qs[i]||{q:"No questions loaded"};A.$("#q").textContent=q.q;A.$("#a").textContent="";A.$("#rd").textContent="Question "+(i+1)+" of "+qs.length;
+  var t=A.$("#teams");t.innerHTML="";teams.forEach(function(x,k){var d=A.el("div",{class:"team f"+(k===last?" last":"")},'<span style="color:'+x.c+';font-weight:800">'+x.n+'</span><b class="tnum">'+x.s+'</b>');d.onclick=function(){pt(k,1)};t.appendChild(d)});A.fx()}
+function pt(k,d){teams[k].s=Math.max(0,teams[k].s+d);last=k;var a=A.$("#a").textContent;draw();A.$("#a").textContent=a}
+function nav(d){i=Math.max(0,Math.min(qs.length-1,i+d));draw()}
+A.dock([{label:"Previous",icon:"back",fn:function(){nav(-1)}},{label:"Show answer",icon:"check",key:"yellow",primary:true,fn:function(){A.$("#a").textContent=(qs[i]&&qs[i].a)||""}},{label:"Next",icon:"next",fn:function(){nav(1)}},
+  {label:"Red +1",key:"red",fn:function(){pt(0,1)}},{label:"Green +1",key:"green",fn:function(){pt(1,1)}},{label:"Blue +1",key:"blue",fn:function(){pt(2,1)}}]);
+A.on("right",function(){nav(1)});A.on("left",function(){nav(-1)});
+A.state("#q","load");A.getJSON("questions.json").then(function(d){qs=d.questions||[];draw()}).catch(function(e){A.state("#q","err","Could not load questions",e.message)});
 </script></body></html>

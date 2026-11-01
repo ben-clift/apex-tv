@@ -1,24 +1,24 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Party Timers</title>
-<link rel="stylesheet" href="shared/common.css"><style>.big{font-size:6em;text-align:center;font-weight:200}.row{display:grid;grid-template-columns:repeat(5,1fr);gap:20px}</style></head><body>
-<div class="top"><h1>Party Timers</h1><span id="label" class="dim"></span></div>
-<div class="wrap"><div class="big" id="d">00:00</div>
-<div class="row" id="pre" style="margin-top:30px"></div>
-<p style="margin-top:30px"><span class="btn f" id="sp">Start / pause</span> <span class="btn f" id="rs">Reset</span> <span class="btn f" id="up">+1 min</span> <span class="btn f" id="dn">-1 min</span></p>
-<h2 style="margin-top:30px">Countdown to a date</h2><div id="cd" class="dim"></div></div>
-<script>window.HINTS='<span class="c-g">GREEN start/pause</span><span class="c-r">RED reset</span>▲ +1 min ▼ −1 min'</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Timers · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>.big{text-align:center;font-size:clamp(4rem,18vw,13rem);font-weight:200;line-height:1;margin:.6rem 0}.big.warn{color:var(--gold2)}.big.done{color:var(--red)}.lbl{text-align:center;color:var(--ink2)}
+.pre{display:grid;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr));gap:.6rem;margin:1.2rem 0}.pre .card{justify-content:center;text-align:center;padding:.8rem}</style></head><body>
+<header id="appbar" data-title="Timers" data-icon="timer" data-sub=""></header>
+<main class="page"><div class="lbl" id="label">Pick a preset</div><div class="big tnum" id="d">05:00</div><div class="pre" id="pre"></div>
+<div class="sec"><h2>Countdowns</h2></div><div id="cd" class="grid"></div></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-var left=300,total=300,run=false,beep=null;
-function draw(){A.$("#d").textContent=A.pad(Math.floor(left/60))+":"+A.pad(left%60);A.$("#d").style.color=(left<=10&&left>0)?"var(--gold)":"var(--ink)"}
-function setT(s,l){total=left=s;run=false;A.$("#label").textContent=l;draw()}
-[["Pasta",600],["Tea",240],["Pizza",720],["Round",900],["Break",300]].forEach(function(p){var b=A.el("div",{class:"tile f",tabindex:"0",text:p[0]+" "+p[1]/60+"m",style:"min-height:100px;font-size:1em"});b.onclick=function(){setT(p[1],p[0])};A.$("#pre").appendChild(b)});
-function toggle(){run=!run}function reset(){left=total;run=false;draw()}
-A.$("#sp").onclick=toggle;A.$("#rs").onclick=reset;A.$("#up").onclick=function(){left+=60;draw()};A.$("#dn").onclick=function(){left=Math.max(0,left-60);draw()};
-A.on("green",toggle);A.on("red",reset);
-function alarm(){try{var c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator();o.frequency.value=880;o.connect(c.destination);o.start();setTimeout(function(){o.stop()},900)}catch(e){}A.toast("Time is up",6000)}
-setInterval(function(){if(run&&left>0){left--;draw();if(left===0){run=false;alarm()}}},1000);
+var left=300,total=300,run=false;
+function draw(){var d=A.$("#d");d.textContent=A.pad(Math.floor(left/60))+":"+A.pad(left%60);d.className="big tnum"+(left===0&&total>0?" done":left<=10?" warn":"")}
+function setT(sec,l){total=left=sec;run=false;A.$("#label").textContent=l;draw()}
+[["Pasta",600],["Tea",240],["Pizza",720],["Round",900],["Break",300]].forEach(function(p){var c=A.el("div",{class:"card f",role:"button"},'<h3>'+p[0]+' <span class="dim">'+p[1]/60+'m</span></h3>');c.onclick=function(){setT(p[1],p[0])};A.$("#pre").appendChild(c)});
+function beep(){try{var c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator();o.frequency.value=880;o.connect(c.destination);o.start();setTimeout(function(){o.stop()},900)}catch(e){}A.toast("Time is up",6000)}
+A.dock([{label:run?"Pause":"Start / pause",icon:"play",key:"green",primary:true,fn:function(){run=!run}},{label:"+1 min",icon:"plus",key:"yellow",fn:function(){left+=60;draw()}},{label:"-1 min",icon:"minus",fn:function(){left=Math.max(0,left-60);draw()}},{label:"Reset",icon:"refresh",key:"red",fn:function(){left=total;run=false;draw()}}]);
+setInterval(function(){if(run&&left>0){left--;draw();if(left===0){run=false;beep()}}},1000);
 // Date countdowns: edit this list. Dates are YYYY-MM-DD.
 var dates=[{n:"Christmas Day",d:"2026-12-25"},{n:"New Year",d:"2027-01-01"}];
-var box=A.$("#cd");dates.forEach(function(x){var days=Math.ceil((new Date(x.d+"T00:00:00")-new Date())/864e5);box.appendChild(A.el("div",{text:x.n+": "+days+" days"}))});
-draw();
+dates.forEach(function(x){var days=Math.ceil((new Date(x.d+"T00:00:00")-new Date())/864e5);A.$("#cd").appendChild(A.el("div",{class:"card"},'<div class="ico">'+ICON("cal")+'</div><div><h3>'+A.esc(x.n)+'</h3><p>'+(days>0?days+" days to go":"Today or passed")+'</p></div>'))});
+draw();A.keepAwake();
 </script></body></html>

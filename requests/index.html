@@ -1,42 +1,41 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Party Requests</title>
-<link rel="stylesheet" href="shared/common.css"></head><body>
-<div class="top"><h1>Request a track</h1><span class="dim" id="status"></span></div>
-<div class="wrap" style="display:grid;grid-template-columns:520px 1fr;gap:48px">
-  <div class="panel" style="text-align:center"><img id="qr" width="420" height="420" alt="QR" style="background:#fff;padding:12px;border-radius:12px"><p id="qrhint" class="dim"></p></div>
-  <div><h2>Requests (most votes first)</h2><div id="list"></div>
-  <p><span class="btn f" id="clear">Clear all</span> <span class="btn f" id="demo">Add demo request</span></p></div>
-</div>
-<script>window.HINTS='<span class="c-g">GREEN refresh</span><span class="c-r">RED clear</span>'</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Party Requests · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+.split{display:grid;gap:1.2rem;grid-template-columns:minmax(0,22rem) 1fr;align-items:start}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.qrbox{text-align:center}.qrbox img{width:100%;max-width:18rem;aspect-ratio:1;background:#fff;padding:.7rem;border-radius:var(--r);display:block;margin:0 auto .8rem}
+.req{display:flex;align-items:center;gap:.8rem;padding:.8rem 1rem;margin-bottom:.6rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm)}
+.req .pos{width:1.8rem;height:1.8rem;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-weight:800;font-size:.8rem;color:var(--gold2);flex:none}
+.req .tx{flex:1;min-width:0}.req .tx b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.req .v{font-weight:800;color:var(--gold2);display:flex;gap:.3rem;align-items:center}
+</style></head><body>
+<header id="appbar" data-title="Party Requests" data-icon="qr" data-sub=""></header>
+<main class="page"><div class="split">
+  <section class="panel qrbox"><img id="qr" alt="QR code to request a track"><h3>Scan to request a track</h3><p class="small" id="qrhint"></p></section>
+  <section><div class="sec" style="margin-top:0"><h2>Up next, by votes</h2><span id="stat"></span></div><div id="list"></div></section>
+</div></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// Friends open guest.html (host it on GitHub Pages), which posts a NAME of a track to Supabase.
-// Requests are only text. You decide what to play. Nothing downloads from here.
-var C=A.cfg, list=A.$("#list"), live=!!(C.supabaseUrl&&C.supabaseAnonKey);
-var H={apikey:C.supabaseAnonKey,Authorization:"Bearer "+C.supabaseAnonKey,"Content-Type":"application/json"};
-function setQR(){
-  var u=C.guestPageUrl||"https://example.com/guest.html";
-  A.$("#qr").src="https://api.qrserver.com/v1/create-qr-code/?size=420x420&data="+encodeURIComponent(u);
-  A.$("#qrhint").textContent=C.guestPageUrl?"Scan to request a track":"Set guestPageUrl in config.js";
-}
+// Friends scan the code and type a track NAME. Nothing downloads. You decide what plays.
+var C=A.cfg,list=A.$("#list"),live=!!(C.supabaseUrl&&C.supabaseAnonKey),
+    H={apikey:C.supabaseAnonKey,Authorization:"Bearer "+C.supabaseAnonKey,"Content-Type":"application/json"};
+var guest=C.guestPageUrl||(location.origin+location.pathname.replace(/index\.html$/,"")+"guest.html");
+A.$("#qr").src="https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=0&data="+encodeURIComponent(guest);
+A.$("#qrhint").textContent=guest.replace(/^https?:\/\//,"");
 function draw(rows){
-  rows.sort(function(a,b){return (b.votes||0)-(a.votes||0)});
-  list.innerHTML="";
-  if(!rows.length)list.appendChild(A.el("p",{class:"dim",text:"Nothing yet. Scan the code."}));
-  rows.slice(0,10).forEach(function(r,i){
-    list.appendChild(A.el("div",{class:"panel",style:"margin:10px 0;display:flex;justify-content:space-between"},[
-      A.el("span",{text:(i+1)+". "+r.track+(r.who?"  ("+r.who+")":"")}),A.el("span",{class:"c-y",text:"▲ "+(r.votes||0)})]))});
-}
+  rows.sort(function(a,b){return (b.votes||0)-(a.votes||0)});list.innerHTML="";
+  if(!rows.length){A.state(list,"empty","No requests yet","Ask your friends to scan the code.");return}
+  rows.slice(0,10).forEach(function(r,i){var d=A.el("div",{class:"req"},'<div class="pos">'+(i+1)+'</div><div class="tx"><b>'+A.esc(r.track)+'</b><span class="small dim">'+A.esc(r.who||"Guest")+'</span></div><div class="v">'+ICON("next","")+(r.votes||0)+'</div>');list.appendChild(d)})}
 function load(){
-  if(!live){draw(A.store("requests")||[]);A.$("#status").textContent="Demo mode (saved on this TV only)";return}
-  A.getJSON(C.supabaseUrl+"/rest/v1/requests?select=*&order=votes.desc&limit=30",{headers:H}).then(function(r){draw(r);A.$("#status").textContent="Live"})
-   .catch(function(e){A.$("#status").textContent="Supabase problem: "+e.message})
-}
-function clearAll(){
-  if(!live){A.store("requests",[]);return load()}
-  // Needs a delete policy for the anon role, or do it from the Supabase dashboard
-  fetch(C.supabaseUrl+"/rest/v1/requests?id=gt.0",{method:"DELETE",headers:H}).then(function(r){if(!r.ok)A.toast("Clear blocked. Delete rows in Supabase.");load()})
-}
-A.$("#clear").onclick=clearAll;A.on("red",clearAll);A.on("green",load);
-A.$("#demo").onclick=function(){var r=A.store("requests")||[];r.push({track:"Demo track "+(r.length+1),who:"Guest",votes:Math.floor(Math.random()*5)});A.store("requests",r);load()};
-setQR();load();setInterval(load,10000);
+  if(!live){draw(A.store("requests")||[]);A.$("#stat").innerHTML='<span class="chip warn">Demo mode</span>';A.$("#barsub")&&(A.$("#barsub").textContent="Add Supabase in Settings to go live");return}
+  A.getJSON(C.supabaseUrl+"/rest/v1/requests?select=*&order=votes.desc&limit=30",{headers:H}).then(function(r){draw(r);A.$("#stat").innerHTML='<span class="chip ok">Live</span>'})
+   .catch(function(e){A.state(list,"err","Could not load requests",e.message,'<button class="btn f" id="retry" type="button">Try again</button>');A.$("#retry").onclick=load;A.$("#stat").innerHTML='<span class="chip warn">Offline</span>'})}
+function demo(){var r=A.store("requests")||[];r.push({track:"Demo track "+(r.length+1),who:"Guest",votes:Math.floor(Math.random()*5)+1});A.store("requests",r);load()}
+function clearAll(){if(!live){A.store("requests",[]);return load()}
+  fetch(C.supabaseUrl+"/rest/v1/requests?id=gt.0",{method:"DELETE",headers:H}).then(function(r){if(!r.ok)A.toast("Clearing is blocked. Delete rows in Supabase.",3500);load()})}
+A.dock([{label:"Refresh",icon:"refresh",key:"green",fn:load},{label:"Clear all",icon:"minus",key:"red",fn:clearAll}].concat(live?[]:[{label:"Add demo",icon:"plus",key:"yellow",fn:demo}]));
+A.state(list,"load");load();setInterval(load,10000);
 </script></body></html>

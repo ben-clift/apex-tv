@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Settings · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css"></head><body>
+<header id="appbar" data-title="Settings" data-icon="gear" data-sub="Saved on this device only"></header>
+<main class="page"><div class="grid two" style="align-items:start">
+  <section class="panel"><h2>Watch</h2><div style="height:.8rem"></div>
+    <div class="field"><label for="kapangUrl">Kapang start link</label><input id="kapangUrl" inputmode="url" placeholder="https://kapang.com/live?channel_id=799"><div class="help">A channel or the live page.</div></div>
+    <div class="field"><label for="dashboardUrl">Creator Finder link</label><input id="dashboardUrl" inputmode="url" placeholder="https://your-app.streamlit.app/?embed=true"></div>
+  </section>
+  <section class="panel"><h2>Party</h2><div style="height:.8rem"></div>
+    <div class="field"><label for="wledIp">WLED lights address</label><input id="wledIp" placeholder="192.168.1.50"><div class="help">Your lights must be on the same Wi-Fi as the TV.</div></div>
+    <div class="field"><label for="nowPlayingUrl">Now Playing data link</label><input id="nowPlayingUrl" inputmode="url" placeholder="https://.../now.json"></div>
+    <div class="field"><label for="beatdeckStateUrl">BeatDeck steering link</label><input id="beatdeckStateUrl" inputmode="url" placeholder="https://.../state.json"><div class="help">Lets your phone set the tempo and preset on the TV.</div></div>
+  </section>
+  <section class="panel"><h2>Friends' requests</h2><div style="height:.8rem"></div>
+    <div class="field"><label for="supabaseUrl">Supabase project link</label><input id="supabaseUrl" inputmode="url" placeholder="https://abcd.supabase.co"></div>
+    <div class="field"><label for="supabaseAnonKey">Supabase public (anon) key</label><input id="supabaseAnonKey" autocomplete="off"><div class="help">Public key only. Never paste a secret or service key here.</div></div>
+    <div class="field"><label for="guestPageUrl">Guest page link</label><input id="guestPageUrl" inputmode="url" placeholder="https://ben-clift.github.io/apex-tv/requests/guest.html"></div>
+  </section>
+  <section class="panel"><h2>Places and media</h2><div style="height:.8rem"></div>
+    <div class="field"><label for="placeName">Weather place</label><input id="placeName" placeholder="Marlborough"></div>
+    <div style="display:flex;gap:.7rem"><div class="field" style="flex:1"><label for="lat">Latitude</label><input id="lat" inputmode="decimal"></div><div class="field" style="flex:1"><label for="lon">Longitude</label><input id="lon" inputmode="decimal"></div></div>
+    <div class="field"><label for="adUrls">Ad video links (one per line)</label><textarea id="adUrls" rows="3"></textarea></div>
+    <div class="field"><label for="streams">Test streams (Name | link, one per line)</label><textarea id="streams" rows="3"></textarea></div>
+  </section>
+</div>
+<div class="panel" style="margin-top:.9rem"><h3>Back up or move settings</h3><p class="small" style="margin:.3rem 0 .7rem">Copy this text to keep a backup, or paste settings from another device and press Apply.</p>
+<textarea id="blob" rows="4" class="small"></textarea><div style="margin-top:.6rem;display:flex;gap:.6rem;flex-wrap:wrap"><button class="btn f" id="apply" type="button">Apply pasted settings</button><button class="btn f" id="reset" type="button">Reset to defaults</button></div></div>
+</main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
+<script>
+var simple=["kapangUrl","dashboardUrl","wledIp","nowPlayingUrl","beatdeckStateUrl","supabaseUrl","supabaseAnonKey","guestPageUrl"],D=A.cfg;
+function fill(){simple.forEach(function(k){A.$("#"+k).value=D[k]||""});var p=D.place||{};A.$("#placeName").value=p.name||"";A.$("#lat").value=p.lat||"";A.$("#lon").value=p.lon||"";
+  A.$("#adUrls").value=(D.adUrls||[]).join("\n");A.$("#streams").value=(D.streams||[]).map(function(s){return s.name+" | "+s.url}).join("\n");blob()}
+function collect(){var o={};simple.forEach(function(k){var v=A.$("#"+k).value.trim();if(v!==(A.defaults[k]||""))o[k]=v});
+  var pl={name:A.$("#placeName").value.trim()||"Home",lat:parseFloat(A.$("#lat").value),lon:parseFloat(A.$("#lon").value)};if(isFinite(pl.lat)&&isFinite(pl.lon))o.place=pl;
+  var ads=A.$("#adUrls").value.split("\n").map(function(s){return s.trim()}).filter(Boolean);if(ads.length)o.adUrls=ads;
+  var st=A.$("#streams").value.split("\n").map(function(l){var a=l.split("|");return a.length>1?{name:a[0].trim(),url:a.slice(1).join("|").trim()}:null}).filter(Boolean);if(st.length)o.streams=st;return o}
+function blob(){A.$("#blob").value=JSON.stringify(A.saved)}
+function commit(){var o=collect();if(A.saveSettings(o)){A.saved=o;blob();A.toast("Saved")}else A.toast("Could not save on this device")}
+A.$$("input,textarea").forEach(function(e){if(e.id!=="blob")e.classList.add("f");e.addEventListener("change",commit)});
+A.$("#apply").onclick=function(){try{var o=JSON.parse(A.$("#blob").value||"{}");if(typeof o!=="object")throw 0;A.saveSettings(o);A.toast("Applied. Reloading...");setTimeout(function(){location.reload()},700)}catch(e){A.toast("That text is not valid settings")}};
+A.$("#reset").onclick=function(){A.saveSettings({});A.toast("Reset. Reloading...");setTimeout(function(){location.reload()},700)};
+fill();
+A.dock([{label:"Save",icon:"check",key:"green",primary:true,fn:commit},{label:"Home",icon:"home",key:"red",fn:A.goHome}]);
+</script></body></html>

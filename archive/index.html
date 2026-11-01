@@ -1,18 +1,24 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Family Archive</title>
-<link rel="stylesheet" href="shared/common.css"><style>#img{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;transition:opacity .8s}#cap{position:fixed;left:0;right:0;bottom:60px;text-align:center;padding:20px 80px;background:linear-gradient(#0000,#000c);font-size:1.1em}#yr{position:fixed;top:30px;right:50px;font-size:2em;color:var(--gold);text-shadow:0 0 10px #000}</style></head><body>
-<img id="img" alt=""><div id="yr"></div><div id="cap"></div>
-<script>window.HINTS='◀ ▶ previous / next<span class="c-g">GREEN play/pause</span><span class="c-r">RED shuffle</span>'</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Family Archive · Apex TV</title><meta name="theme-color" content="#000000"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>html,body{background:#000;height:100%;overflow:hidden;padding:0}#img{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .8s}
+#cap{position:fixed;left:0;right:0;bottom:0;text-align:center;padding:3rem var(--pad) 5.5rem;background:linear-gradient(transparent,#000d);font-size:1.15rem}#yr{position:fixed;top:4.2rem;right:var(--pad);font-size:2rem;font-weight:800;color:var(--gold2);text-shadow:0 2px 12px #000}
+.top{position:fixed;left:0;right:0;top:0;z-index:20;padding:.8rem var(--pad);display:flex;align-items:center;gap:.7rem;background:linear-gradient(#000c,transparent);transition:opacity .4s}.top .back{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:50%;background:#ffffff22}.off{opacity:0;pointer-events:none}#msg{position:fixed;inset:0;display:grid;place-items:center;z-index:5}</style></head><body>
+<div class="top ui" id="top"><a class="back f" href="../index.html" aria-label="Back to home">&#8249;</a><b>Family Archive</b></div>
+<img id="img" alt=""><div id="yr"></div><div id="cap"></div><div id="msg"></div>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// Put photos in photos/ and list them in archive.json. Nothing is uploaded anywhere. Keep each file small
-// (under 1 MB, 1920 px wide) so the TV loads fast. Avoid naming living relatives you have not asked.
+// Photos live in this folder and are listed in archive.json. Keep each under 1 MB. Only public repositories are visible to everyone,
+// so do not add private family photos to a public site.
 var items=[],i=0,playing=true,timer;
-function show(n){if(!items.length)return;i=(n+items.length)%items.length;var it=items[i];var im=A.$("#img");im.style.opacity=0;
-  setTimeout(function(){im.src=it.file;im.onload=function(){im.style.opacity=1}},400);
-  A.$("#cap").textContent=it.caption||"";A.$("#yr").textContent=it.year||""}
+function show(n){if(!items.length)return;i=(n+items.length)%items.length;var it=items[i],im=A.$("#img");im.style.opacity=0;setTimeout(function(){im.src=it.file;im.onload=function(){im.style.opacity=1}},300);A.$("#cap").textContent=it.caption||"";A.$("#yr").textContent=it.year||""}
 function start(){clearInterval(timer);if(playing)timer=setInterval(function(){show(i+1)},9000)}
-A.on("right",function(){show(i+1);start()});A.on("left",function(){show(i-1);start()});
-A.on("green",function(){playing=!playing;A.toast(playing?"Playing":"Paused");start()});A.on("play",function(){playing=!playing;start()});
-A.on("red",function(){items.sort(function(){return Math.random()-.5});show(0)});
-A.getJSON("archive.json").then(function(d){items=d.items.sort(function(a,b){return (a.year||0)-(b.year||0)});show(0);start()}).catch(function(e){A.$("#cap").textContent=e.message});
+function wake(){A.$$(".ui").forEach(function(e){e.classList.remove("off")});clearTimeout(wake.t);wake.t=setTimeout(function(){A.$$(".ui").forEach(function(e){e.classList.add("off")})},4000)}
+["mousemove","touchstart","keydown","click"].forEach(function(ev){addEventListener(ev,wake,{passive:true})});
+A.getJSON("archive.json").then(function(d){items=(d.items||[]).filter(function(x){return x.file&&!/example/.test(x.file)}).sort(function(a,b){return (a.year||0)-(b.year||0)});
+  if(!items.length){A.state("#msg","empty","Add your first photo","Upload a photo to the archive/photos folder and list it in archive.json with a caption and year.",'<a class="btn f" href="../index.html">Home</a>');return}show(0);start()}).catch(function(e){A.state("#msg","err","Could not load the archive",e.message)});
+A.dock([{label:"Previous",icon:"back",fn:function(){show(i-1);start()}},{label:"Play / pause",icon:"play",key:"green",fn:function(){playing=!playing;A.toast(playing?"Playing":"Paused");start()}},{label:"Shuffle",icon:"shuffle",key:"red",fn:function(){items.sort(function(){return Math.random()-.5});show(0)}},{label:"Next",icon:"next",fn:function(){show(i+1);start()}}]);
+A.$("#dock").classList.add("ui");A.on("right",function(){show(i+1);start()});A.on("left",function(){show(i-1);start()});wake();
 </script></body></html>

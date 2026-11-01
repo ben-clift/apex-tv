@@ -1,9 +1,15 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Apex Hub</title>
-<link rel="stylesheet" href="shared/common.css"></head><body>
-<div class="top"><h1>Apex Hub</h1><span class="dim">Your web tools in one place</span></div>
-<div class="wrap grid" id="g" style="grid-template-columns:repeat(4,1fr)"></div>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Link Hub · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css"></head><body>
+<header id="appbar" data-title="Link Hub" data-icon="grid" data-sub="Your favourite sites"></header>
+<main class="page"><div class="grid" id="g"></div><p class="small dim" style="margin-top:1.2rem">Add or remove links in Settings. Each opens full screen. Press Back to return.</p></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// Tiles come from hubLinks in config.js. Each opens the page full screen. Back returns to the hub.
-(A.cfg.hubLinks||[]).forEach(function(l){var t=A.el("a",{class:"tile f",href:l.url,tabindex:"0",text:l.name,style:"color:inherit;text-decoration:none"});A.$("#g").appendChild(t)});
+var links=(A.cfg.hubLinks||[]),g=A.$("#g");
+if(!links.length)A.state(g,"empty","No links yet","Add some in config or Settings.");
+links.forEach(function(l){var host="";try{host=new URL(l.url).hostname.replace(/^www\./,"")}catch(e){}
+  var c=A.el("a",{class:"card f",href:l.url},'<div class="ico">'+ICON("link")+'</div><div style="min-width:0"><h3>'+A.esc(l.name)+'</h3><p style="overflow:hidden;text-overflow:ellipsis">'+A.esc(host)+'</p></div>');g.appendChild(c)});
+A.fx();A.dock([{label:"Home",icon:"home",key:"red",fn:A.goHome}]);
 </script></body></html>

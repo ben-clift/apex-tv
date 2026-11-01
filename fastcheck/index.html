@@ -1,20 +1,22 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Stream Check</title>
-<link rel="stylesheet" href="shared/common.css"><style>video{width:1280px;height:720px;background:#000;border-radius:12px}#info{font-size:.7em;line-height:1.5}</style></head><body>
-<div class="top"><h1>Stream Check</h1><span id="name" class="dim"></span></div>
-<div class="wrap" style="display:grid;grid-template-columns:1300px 1fr;gap:30px"><video id="v" controls autoplay></video><div><h2>Streams</h2><div id="list"></div><pre id="info" class="dim"></pre></div></div>
-<script>window.HINTS='◀ ▶ previous / next stream<span class="c-g">GREEN play/pause</span>'</script>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stream Check · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>.split{display:grid;gap:1.2rem;grid-template-columns:minmax(0,2fr) minmax(0,1fr)}@media (max-width:860px){.split{grid-template-columns:1fr}}
+video{width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--r)}pre{font:inherit;color:var(--ink2);white-space:pre-wrap;margin-top:.6rem}</style></head><body>
+<header id="appbar" data-title="Stream Check" data-icon="play" data-sub=""></header>
+<main class="page"><div id="msg"></div><div class="split" id="main"><div><video id="v" controls playsinline autoplay></video><pre id="info" class="small"></pre></div><div id="list"></div></div></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// For testing HLS (.m3u8) or mp4 streams you own or are licensed to use, for example an Apex FAST channel feed,
-// on a real Samsung TV. Samsung's player handles HLS natively. Add links to "streams" in config.js.
-var s=A.cfg.streams||[],i=0,v=A.$("#v"),stalls=0,t0;
-function list(){var l=A.$("#list");l.innerHTML="";if(!s.length)l.appendChild(A.el("p",{class:"dim",text:"No streams. Add to streams in config.js: [{name,url}]"}));
-  s.forEach(function(x,k){var b=A.el("div",{class:"panel f",tabindex:"0",text:x.name,style:"margin:8px 0;font-size:.8em"});b.onclick=function(){play(k)};l.appendChild(b)})}
-function play(k){i=(k+s.length)%s.length;stalls=0;t0=Date.now();A.$("#name").textContent=s[i].name;v.src=s[i].url;v.play&&v.play()}
-v.addEventListener("waiting",function(){stalls++;info()});v.addEventListener("error",function(){A.toast("Playback error. Check the link and that it allows TV playback.",4000)});
-v.addEventListener("loadedmetadata",function(){info()});
-function info(){A.$("#info").textContent="Size: "+v.videoWidth+"x"+v.videoHeight+"\nStarted in about "+(t0?Math.round((Date.now()-t0)/100)/10+" s":"?")+"\nBuffer stalls: "+stalls+"\nDuration: "+(isFinite(v.duration)?Math.round(v.duration)+" s":"live")}
+// For testing HLS (.m3u8) or mp4 streams you own or are licensed to use, for example an Apex FAST channel feed.
+var s=(A.cfg.streams||[]),i=0,v=A.$("#v"),stalls=0,t0;
+function info(){A.$("#info").textContent="Size: "+(v.videoWidth||"-")+" x "+(v.videoHeight||"-")+"\nStarted in about "+(t0?Math.round((Date.now()-t0)/100)/10+" s":"?")+"\nBuffer stalls: "+stalls+"\nDuration: "+(isFinite(v.duration)?Math.round(v.duration)+" s":"live")}
+function play(k){i=(k+s.length)%s.length;stalls=0;t0=Date.now();A.$("#barsub").textContent=s[i].name;v.src=s[i].url;v.play&&v.play().catch(function(){});list()}
+function list(){var l=A.$("#list");l.innerHTML="";s.forEach(function(x,k){var c=A.el("div",{class:"card f",role:"button"},'<div class="ico">'+ICON("play")+'</div><div><h3>'+A.esc(x.name)+'</h3></div>');if(k===i)c.style.borderColor="var(--gold)";c.onclick=function(){play(k)};l.appendChild(c)});A.fx()}
+v.addEventListener("waiting",function(){stalls++;info()});v.addEventListener("loadedmetadata",info);v.addEventListener("error",function(){A.toast("Playback error. Check the link allows this device.",4500)});
+if(!s.length){A.$("#main").style.display="none";A.state("#msg","empty","No streams yet","Add a name and link per line on the Settings page.",'<a class="btn primary f" href="../settings/">Open Settings</a>')}
 A.on("right",function(){if(s.length)play(i+1)});A.on("left",function(){if(s.length)play(i-1)});
-A.on("green",function(){v.paused?v.play():v.pause()});A.on("play",function(){v.paused?v.play():v.pause()});
-list();if(s.length)play(0);
+A.dock([{label:"Play / pause",icon:"play",key:"green",fn:function(){v.paused?v.play():v.pause()}},{label:"Next",icon:"next",key:"yellow",fn:function(){if(s.length)play(i+1)}}]);
+if(s.length)play(0);
 </script></body></html>

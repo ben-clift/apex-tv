@@ -1,1 +1,50 @@
-<!doctype html><meta charset="utf-8"><title>Apex TV apps</title><link rel="stylesheet" href="dashboard/shared/common.css"><div class="top"><h1>Apex TV apps (browser preview)</h1></div><div class="wrap grid" style="grid-template-columns:repeat(4,1fr)"><a class="f tile" href="beatdeckvis/index.html"><div><b>BeatDeck Visuals</b><br><span class="dim" style="font-size:.6em">MilkDrop visuals with settings, steered by BeatDeck</span></div></a><a class="f tile" href="kapang/index.html"><div><b>Kapang</b><br><span class="dim" style="font-size:.6em">Opens the Kapang free TV site full screen</span></div></a><a class="f tile" href="dashboard/index.html"><div><b>Apex Dashboard</b><br><span class="dim" style="font-size:.6em">Creator Finder pipeline on the big screen</span></div></a><a class="f tile" href="requests/index.html"><div><b>Party Requests</b><br><span class="dim" style="font-size:.6em">QR code and live board for friends&#x27; track requests</span></div></a><a class="f tile" href="visuals/index.html"><div><b>Beat Visuals</b><br><span class="dim" style="font-size:.6em">Full screen visuals that pulse at your BPM</span></div></a><a class="f tile" href="fixtures/index.html"><div><b>Where To Watch</b><br><span class="dim" style="font-size:.6em">Fixtures list with the legal place to watch each one</span></div></a><a class="f tile" href="archive/index.html"><div><b>Family Archive</b><br><span class="dim" style="font-size:.6em">Photo and document slideshow with a timeline</span></div></a><a class="f tile" href="lights/index.html"><div><b>Lights Control</b><br><span class="dim" style="font-size:.6em">Beat flash and scenes for a WLED strip</span></div></a><a class="f tile" href="adpreview/index.html"><div><b>Ad Preview</b><br><span class="dim" style="font-size:.6em">Play Hookreel ads full screen in phone or square shapes</span></div></a><a class="f tile" href="quiz/index.html"><div><b>Quiz Night</b><br><span class="dim" style="font-size:.6em">Pub quiz host screen with team scores</span></div></a><a class="f tile" href="scoreboard/index.html"><div><b>Scoreboard</b><br><span class="dim" style="font-size:.6em">Two team scores and a match clock</span></div></a><a class="f tile" href="clock/index.html"><div><b>Ambient Clock</b><br><span class="dim" style="font-size:.6em">Big clock and weather for a spare screen</span></div></a><a class="f tile" href="nowplaying/index.html"><div><b>Now Playing</b><br><span class="dim" style="font-size:.6em">DJ now playing and up next board</span></div></a><a class="f tile" href="hub/index.html"><div><b>Apex Hub</b><br><span class="dim" style="font-size:.6em">One screen of links to your web tools</span></div></a><a class="f tile" href="timers/index.html"><div><b>Party Timers</b><br><span class="dim" style="font-size:.6em">Countdowns and kitchen timers with alarm</span></div></a><a class="f tile" href="fastcheck/index.html"><div><b>Stream Check</b><br><span class="dim" style="font-size:.6em">Test HLS streams for a FAST channel on a real TV</span></div></a></div><script src="dashboard/shared/config.js"></script><script src="dashboard/shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="./"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Apex TV</title><meta name="description" content="Your TV and phone toolkit: free channels, MilkDrop visuals, party tools and more.">
+<meta name="theme-color" content="#07080c"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="shared/style.css">
+<style>
+.lead{max-width:44rem;margin:.6rem 0 1.4rem;font-size:1.05rem}
+.hero-grid{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))}
+.card.hero h3{font-size:1.3rem}
+.cta{margin-top:.8rem}
+.foot{margin:2.4rem 0 0;display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+.logo{font-weight:900;letter-spacing:-.03em}
+</style></head><body>
+<header id="appbar" data-home="1" data-title="Apex TV" data-icon="tv" data-sub="Your screens, your tools"></header>
+<main class="page">
+  <h1>Welcome back.</h1>
+  <p class="lead">Free TV, music visuals and party tools for your TV and phone. Pick something to open it full screen.</p>
+
+  <div class="hero-grid" id="feat"></div>
+  <div class="sec"><h2>More for your TV</h2><span id="cnt1"></span></div>
+  <div class="grid" id="main"></div>
+
+  <div class="sec"><h2>Labs</h2><span>Early versions. Some need a little setup.</span></div>
+  <div class="grid" id="labs"></div>
+
+  <div class="foot">
+    <a class="btn f" href="settings/">Settings</a>
+    <span class="small dim" id="inst">On your phone you can add this site to your home screen from the browser menu.</span>
+  </div>
+</main>
+<script src="shared/config.js"></script><script src="shared/icons.js"></script><script src="shared/app.js"></script>
+<script>
+(function(){
+  function card(a,hero){
+    var need=A.needsSetup(a);
+    var c=A.el("a",{class:"card f"+(hero?" hero":""),href:a.id+"/"});
+    c.innerHTML='<div class="ico">'+ICON(a.icon)+'</div><div style="min-width:0"><h3>'+A.esc(a.name)+'</h3><p>'+A.esc(a.desc)+'</p>'+
+      (need?'<div style="margin-top:.5rem"><span class="chip warn">'+A.esc(a.need||"Needs setup")+'</span></div>':"")+
+      (hero?'<div class="cta"><span class="btn primary">Open '+ICON("next")+'</span></div>':"")+'</div>';
+    return c}
+  var feat=A.$("#feat"),main=A.$("#main"),labs=A.$("#labs");
+  A.apps.forEach(function(a){
+    if(a.feat)feat.appendChild(card(a,true));
+    else if(a.labs)labs.appendChild(card(a));
+    else main.appendChild(card(a));
+  });
+  A.fx();
+})();
+</script></body></html>

@@ -1,23 +1,29 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Request a track</title>
-<style>body{font:18px system-ui;background:#0b0c10;color:#f3efe3;margin:0;padding:20px;max-width:520px;margin:auto}input,button{font:inherit;width:100%;padding:14px;margin:8px 0;border-radius:10px;border:1px solid #444;background:#1b1d26;color:#fff}button{background:#d9a521;color:#111;font-weight:700;border:0}li{margin:8px 0;list-style:none;display:flex;justify-content:space-between}</style></head><body>
-<h2>Request a track</h2>
-<p style="color:#9a9684">Type the artist and title. The DJ decides what gets played.</p>
-<input id="t" placeholder="Artist - Title" maxlength="80"><input id="w" placeholder="Your name (optional)" maxlength="30">
-<button id="go">Send request</button><p id="msg"></p><ul id="list"></ul>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Request a track</title><meta name="theme-color" content="#07080c"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>body{padding-bottom:2rem}.wrap{max-width:30rem;margin:0 auto;padding:1.2rem}
+.r{display:flex;align-items:center;gap:.7rem;padding:.7rem .9rem;margin-top:.5rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm)}.r b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}</style></head><body>
+<div class="wrap"><h1>Request a track</h1><p style="margin:.4rem 0 1.2rem">Type the artist and title. The DJ decides what gets played.</p>
+<div class="field"><label for="t">Artist and title</label><input id="t" maxlength="80" placeholder="Artist - Title"></div>
+<div class="field"><label for="w">Your name (optional)</label><input id="w" maxlength="30"></div>
+<button class="btn primary" id="go" type="button" style="width:100%;justify-content:center">Send request</button>
+<p id="msg" class="small" style="margin-top:.7rem" role="status"></p>
+<div class="sec"><h2>Vote for others</h2></div><div id="list"></div></div>
+<script src="../shared/config.js"></script>
 <script>
-// Host this file somewhere public (GitHub Pages). Paste your PUBLIC anon key and URL, never a secret key.
-var URL="PASTE_SUPABASE_URL", KEY="PASTE_SUPABASE_ANON_KEY";
-var H={apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"};
-var last=0;
-function load(){fetch(URL+"/rest/v1/requests?select=*&order=votes.desc&limit=15",{headers:H}).then(r=>r.json()).then(rows=>{
-  var ul=document.getElementById("list");ul.innerHTML="";
-  rows.forEach(r=>{var li=document.createElement("li");li.textContent=r.track+"  ";var b=document.createElement("button");b.style.width="auto";b.textContent="▲ "+(r.votes||0);
-    b.onclick=function(){fetch(URL+"/rest/v1/rpc/vote",{method:"POST",headers:H,body:JSON.stringify({req_id:r.id})}).then(load)};li.appendChild(b);ul.appendChild(li)})})}
-document.getElementById("go").onclick=function(){
-  var t=document.getElementById("t").value.trim();if(!t)return;
-  if(Date.now()-last<15000){msg.textContent="Wait a few seconds between requests.";return}  // client side only; add a server limit too
-  last=Date.now();
-  fetch(URL+"/rest/v1/requests",{method:"POST",headers:H,body:JSON.stringify({track:t.slice(0,80),who:document.getElementById("w").value.slice(0,30),votes:1})})
-   .then(r=>{msg.textContent=r.ok?"Sent!":"Could not send";document.getElementById("t").value="";load()})};
-var msg=document.getElementById("msg");load();setInterval(load,10000);
+// Uses the public Supabase settings from shared/config.js. A public (anon) key is safe here only because
+// the database allows nothing except adding a request, reading, and voting (see supabase_requests.sql).
+var C=window.APEX||{},URL_=C.supabaseUrl,KEY=C.supabaseAnonKey,H={apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},last=0,msg=document.getElementById("msg");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+if(!URL_||!KEY){msg.textContent="Requests are not switched on yet. Please ask the DJ."}
+function load(){if(!URL_)return;fetch(URL_+"/rest/v1/requests?select=*&order=votes.desc&limit=15",{headers:H}).then(function(r){return r.json()}).then(function(rows){
+  var l=document.getElementById("list");l.innerHTML="";rows.forEach(function(r){var d=document.createElement("div");d.className="r";d.innerHTML="<b>"+esc(r.track)+"</b><button class='btn' type='button'>&#9650; "+(r.votes||0)+"</button>";
+    d.querySelector("button").onclick=function(){fetch(URL_+"/rest/v1/rpc/vote",{method:"POST",headers:H,body:JSON.stringify({req_id:r.id})}).then(load)};l.appendChild(d)})}).catch(function(){})}
+document.getElementById("go").onclick=function(){var t=document.getElementById("t").value.trim();if(!t||!URL_)return;
+  if(Date.now()-last<15000){msg.textContent="Please wait a few seconds between requests.";return}last=Date.now();
+  fetch(URL_+"/rest/v1/requests",{method:"POST",headers:H,body:JSON.stringify({track:t.slice(0,80),who:document.getElementById("w").value.slice(0,30),votes:1})})
+   .then(function(r){msg.textContent=r.ok?"Sent. Thank you!":"Sorry, that did not send.";document.getElementById("t").value="";load()}).catch(function(){msg.textContent="Sorry, that did not send."})};
+load();setInterval(load,10000);
 </script></body></html>

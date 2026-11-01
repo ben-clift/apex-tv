@@ -1,17 +1,21 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Now Playing</title>
-<link rel="stylesheet" href="shared/common.css"></head><body>
-<div class="top"><h1>Now Playing</h1><span id="st" class="dim"></span></div>
-<div class="wrap" style="text-align:center;margin-top:60px"><div id="artist" style="font-size:2.2em" class="dim"></div><div id="title" style="font-size:3.6em;font-weight:700"></div>
-<div id="meta" class="c-y" style="font-size:1.6em;margin:24px 0"></div><h2 style="margin-top:60px" class="dim">Up next</h2><div id="next" style="font-size:1.3em"></div></div>
-<script src="shared/config.js"></script><script src="shared/common.js"></script>
+<!doctype html>
+<html lang="en-GB" data-root="../"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Now Playing · Apex TV</title><meta name="theme-color" content="#07080c"><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../favicon.svg">
+<link rel="stylesheet" href="../shared/style.css">
+<style>.np{text-align:center;padding:3vh 0}.np .a{font-size:clamp(1.1rem,2.6vw,2.4rem);color:var(--ink2)}.np .t{font-size:clamp(2rem,6.4vw,6rem);font-weight:850;letter-spacing:-.03em;line-height:1.05;margin:.3rem 0}
+.np .m{display:flex;gap:.7rem;justify-content:center;margin:1rem 0 2.4rem}.np .m .chip{font-size:clamp(.8rem,1.6vw,1.4rem);padding:.3rem .9rem}.nx{max-width:40rem;margin:0 auto}.nx div{padding:.6rem 1rem;border-bottom:1px solid var(--line);text-align:left}</style></head><body>
+<header id="appbar" data-title="Now Playing" data-icon="radio" data-sub=""></header>
+<main class="page"><div id="stage"></div></main>
+<script src="../shared/config.js"></script><script src="../shared/icons.js"></script><script src="../shared/app.js"></script>
 <script>
-// Polls a JSON file you publish: {"artist":"","title":"","bpm":124,"key":"8A","next":[{"artist":"","title":""}]}
-// BeatDeck does not publish this yet. Until it does, you can update the file by hand or from a small script.
-var u=A.cfg.nowPlayingUrl;
-function draw(d){A.$("#artist").textContent=d.artist||"";A.$("#title").textContent=d.title||"";
-  A.$("#meta").textContent=[d.bpm?d.bpm+" BPM":"",d.key?"Key "+d.key:""].filter(Boolean).join("   ");
-  var n=A.$("#next");n.innerHTML="";(d.next||[]).slice(0,3).forEach(function(x){n.appendChild(A.el("div",{text:x.artist+" - "+x.title}))})}
-function poll(){if(!u){draw({artist:"Demo mode",title:"Set nowPlayingUrl in config.js",bpm:124,key:"8A",next:[{artist:"Artist",title:"Next track"}]});A.$("#st").textContent="Demo";return}
-  A.getJSON(u+(u.indexOf("?")>-1?"&":"?")+"t="+Date.now()).then(function(d){draw(d);A.$("#st").textContent="Live"}).catch(function(e){A.$("#st").textContent=e.message})}
-poll();setInterval(poll,5000);
+// Reads a JSON file: {"artist":"","title":"","bpm":124,"key":"8A","next":[{"artist":"","title":""}]}
+var u=A.cfg.nowPlayingUrl,st=A.$("#stage");
+function draw(d,demo){var h='<div class="np"><div class="a">'+A.esc(d.artist||"")+'</div><div class="t">'+A.esc(d.title||"")+'</div><div class="m">'+(d.bpm?'<span class="chip">'+d.bpm+' BPM</span>':"")+(d.key?'<span class="chip">Key '+A.esc(d.key)+'</span>':"")+(demo?'<span class="chip warn">Demo</span>':'<span class="chip ok">Live</span>')+'</div>';
+  if((d.next||[]).length){h+='<h3 class="dim" style="margin-bottom:.4rem">Up next</h3><div class="nx">';d.next.slice(0,3).forEach(function(x){h+='<div>'+A.esc(x.artist)+' - '+A.esc(x.title)+'</div>'});h+='</div>'}
+  st.innerHTML=h+'</div>'}
+function poll(){if(!u){draw({artist:"Demo artist",title:"Your track appears here",bpm:124,key:"8A",next:[{artist:"Next artist",title:"Next track"}]},true);return}
+  A.getJSON(u+(u.indexOf("?")>-1?"&":"?")+"t="+Date.now()).then(function(d){draw(d)}).catch(function(e){A.state(st,"err","Cannot reach your now-playing data",e.message,'<button class="btn f" id="r" type="button">Try again</button>');A.$("#r").onclick=poll})}
+A.dock([{label:"Home",icon:"home",key:"red",fn:A.goHome},{label:"Settings",icon:"gear",key:"yellow",fn:function(){location.href="../settings/"}}]);
+poll();setInterval(poll,5000);A.keepAwake();
 </script></body></html>
